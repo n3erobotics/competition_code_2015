@@ -11,7 +11,7 @@
 //
 // License: newBSD 
 //  
-// Copyright © 2012, HU University of Applied Sciences Utrecht. 
+// Copyright �� 2012, HU University of Applied Sciences Utrecht. 
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -43,7 +43,8 @@
 #define AOIWIDTH 752
 #define AOIHEIGHT 200
 #define PIXELCLOCK 20
-#define FRAMERATE 45
+#define FRAMERATE 30
+#define EXPOSURE 33
 
 /**
  * Wrapper class of UEye camera to support OpenCV Mat using the UEye SDK
@@ -55,7 +56,8 @@ public:
  * @param wdth : width of the image taken by the camera
  * @param heigh : height of the image taken by the camera
  */
-        UeyeOpencvCam(int wdth, int heigh);
+        UeyeOpencvCam();
+        //UeyeOpencvCam(int wdth, int heigh);
         /**
          * Returns the camera id
          * @return camera id

@@ -13,7 +13,7 @@ using namespace std;
 
 SerialPort serialPort;
 VideoCapture webcamT;
-UeyeOpencvCam UEye = UeyeOpencvCam(752,480);
+UeyeOpencvCam UEye = UeyeOpencvCam();
 int display_detected, signal_detected;
 pthread_mutex_t access_webcam = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t access_displays = PTHREAD_MUTEX_INITIALIZER;
@@ -44,8 +44,9 @@ bool wait_ESC(){
 
 	if(waitKey(3)==ESC){
 		cout << "ESC key pressed by user" << endl;
-		serialPort.sendArray("n\n", 3);
-		serialPort.sendArray("r0\n", 3);
+		serialPort.sendArray("n\n");
+		serialPort.sendArray("r0\n");
+		UEye.close();
 		return true;
 	}
 	return false;
@@ -65,9 +66,9 @@ void waiting(int key){
 void SIG_handler(int signo){
 
 	//Martelada d'ouro
-	serialPort.sendArray("n\n", 3);
-	serialPort.sendArray("r0\n", 3);
-
+	serialPort.sendArray("n\n");
+	serialPort.sendArray("r0\n");
+	UEye.close();
 
 	cout << "Exiting with signal " << signo << endl;
 	

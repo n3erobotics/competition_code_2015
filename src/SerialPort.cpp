@@ -97,12 +97,12 @@ void SerialPort::disconnect(void)
     printf("\nPort 1 has been CLOSED and %d is the file description\n", fileDescriptor);
 }
 
-void SerialPort::sendArray(string buffer, int len) {
+void SerialPort::sendArray(string buffer) {
 
 	//pthread_mutex_lock(&access_HUB);
 
 	//cout << "Sending.. " << buffer.c_str();
-	int n=write(fileDescriptor, buffer.c_str(), len);
+	int n=write(fileDescriptor, buffer.c_str(), buffer.length());
 	//pthread_mutex_unlock(&access_HUB);
 
 	usleep(5000);

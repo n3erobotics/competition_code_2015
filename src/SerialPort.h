@@ -27,7 +27,7 @@ public:
 	int connect (const char device[]);
 	void disconnect(void);
 
-	void sendArray(string buffer, int len);
+	void sendArray(string buffer);
 	int getArray (string *buffer, int len);
 
 	int bytesToRead();

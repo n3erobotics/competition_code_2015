@@ -103,6 +103,8 @@ int main()
 
 	UEye.close();
 	webcamT.release();
+	
+	serialPort.sendArray("f0\n");
 
 	cout << "Terminating" << endl;
 	exit(0);

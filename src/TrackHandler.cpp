@@ -21,11 +21,23 @@ bool completed_lap = false;
 //Glabal Variables
 int stoped_detect_zebra, detected_n_zebra, laps;
 bool detected_zebra=false;
-int distance_from_last_lane=0, straight_counter;
+
+//Tracking variables
+int distance_from_last_lane=0;
 vector<double> line2follow, last_line2follow;
 vector<vector<double> > objects;
-bool present_lane = RIGHT;
+bool present_lane = RIGHT; // boolean to represent which lane the car is
+bool end_of_turn=false; // boolean to sinalize if the turn ended (because of the big jump)
+vector<int> lastNturns; // stores the information of the inclination of the last 5 movements 
+int distanceMiddle; // actual distance to middle lane
+int teta; // actual angle of turn
+char dir; // actual direction of turn
+char end_turn_dir; // 
+
+//Global usage
 stringstream message;
+stringstream turn_message;
+stringstream speed_message;
 Mat drawing, image;
 
 //Global variables externally declared
@@ -54,7 +66,6 @@ bool verify_inside_zebra(int upper_limit, int lower_limit){
 	}
 	return false;
 }
-
 // Routine that checks if there are 2 horizontal lines
 //TODO check if objects are inside those lines
 //to make sure it's a crossroad
@@ -138,33 +149,17 @@ void check_crossroad(){
 		}
 	}
 }
-
 void check_display_update(){
 	pthread_mutex_lock(&access_displays);
 
 	if(display_detected!=5){
-		serialPort.sendArray("r15\n",5);
+		serialPort.sendArray("r15\n");
 		usleep(1000000);
 		completed_lap=true;
 	}
 
 	pthread_mutex_unlock(&access_displays);
 }
-void controller(bool direction){
-
-	finding_objects(image);
-	move_in_lane(direction);
-
-	if(present_lane == OUTSIDE){
-		putText(drawing, "OUTSIDE", Point2f(050,050), FONT_HERSHEY_PLAIN, 2, Scalar(255,255,0), 2);
-	}else{
-		putText(drawing, "INSIDE", Point2f(050,050), FONT_HERSHEY_PLAIN, 2, Scalar(255,255,0), 2);
-	}
-	imshow("Drawing", drawing);
-	waitKey(1);
-
-}
-
 //TODO
 void find_first_object(bool position){
 	bool first_line=false;
@@ -174,7 +169,7 @@ void find_first_object(bool position){
 		while(!first_line){
 			message.str("");
 			message << "l50" << endl;
-			serialPort.sendArray(message.str(), message.tellp());
+			serialPort.sendArray(message.str());
 			image=UEye.getFrame();
 			flip(image,image, 0);
 			finding_objects(image);
@@ -219,7 +214,6 @@ void find_first_object(bool position){
 		}
 	}
 }
-
 //TODO
 int wait_signal(){
 	int aux;
@@ -244,7 +238,6 @@ int wait_signal(){
 		}
 	}
 }
-
 //TODO
 bool object_on_right(vector<double> line_object){
 
@@ -254,7 +247,6 @@ bool object_on_right(vector<double> line_object){
 		return true;
 	}
 }
-
 bool object_on_left(vector<double> line_object){
 
 	if( (int)line_object.at(X) >= (int)(line2follow.at(X)+(cos(line2follow.at(TETA)*PI/180)*(line_object.at(Y)-line2follow.at(Y))))){
@@ -263,7 +255,6 @@ bool object_on_left(vector<double> line_object){
 		return true;
 	}
 }
-
 bool only_objects_on_right(){
 	for(size_t i=0; i<objects.size(); i++){
 		//Condition to have objects on left and bellow
@@ -273,7 +264,6 @@ bool only_objects_on_right(){
 	}
 	return true;
 }
-
 bool only_objects_on_left(){
 	for(size_t i=0; i<objects.size(); i++){
 		//Condition to have objects on left and bellow
@@ -283,7 +273,6 @@ bool only_objects_on_left(){
 	}
 	return true;
 }
-
 //TODO
 // Routine to change to "change_lane"
 void change_lane(bool direction){
@@ -305,7 +294,7 @@ void change_lane(bool direction){
 			putText(drawing, "CHANGING", Point2f(350,250), FONT_HERSHEY_PLAIN, 2, Scalar(255,255,0), 2);
 			message.str("");
 			message << "l" << CHANGE_2LEFT_LANE_ANGLE << endl;
-			serialPort.sendArray(message.str(), message.tellp());
+			serialPort.sendArray(message.str());
 		}else{
 			// If we are on left and we discover an object on right we follow it
 			for(size_t i=0; i<objects.size(); i++){
@@ -320,7 +309,7 @@ void change_lane(bool direction){
 			putText(drawing, "CHANGING", Point2f(350,250), FONT_HERSHEY_PLAIN, 2, Scalar(255,255,0), 2);
 			message.str("");
 			message << "r" << CHANGE_2RIGHT_LANE_ANGLE << endl;
-			serialPort.sendArray(message.str(), message.tellp());
+			serialPort.sendArray(message.str());
 		}
 	}else{
 		if(present_lane == OUTSIDE){
@@ -337,7 +326,7 @@ void change_lane(bool direction){
 			putText(drawing, "CHANGING", Point2f(350,250), FONT_HERSHEY_PLAIN, 2, Scalar(255,255,0), 2);
 			message.str("");
 			message << "r" << CHANGE_2LEFT_LANE_ANGLE << endl;
-			serialPort.sendArray(message.str(), message.tellp());
+			serialPort.sendArray(message.str());
 		}else{
 			// If we are on left and we discover an object on right we follow it
 			for(size_t i=0; i<objects.size(); i++){
@@ -352,41 +341,28 @@ void change_lane(bool direction){
 			putText(drawing, "CHANGING", Point2f(350,250), FONT_HERSHEY_PLAIN, 2, Scalar(255,255,0), 2);
 			message.str("");
 			message << "l" << CHANGE_2LEFT_LANE_ANGLE << endl;
-			serialPort.sendArray(message.str(), message.tellp());
+			serialPort.sendArray(message.str());
 		}
 	}
 }
-
 //TODO
 // Routine that calculates servo rotation from distance of the line
-void simple_distance_lines(vector<double> lane, bool direction){
-	int distance, teta;
-	char dir;
-
-	distance = calculateDistanceToMidline(lane.at(X), lane.at(Y), direction);
-	if(distance > 0){
+void simple_distance_lines(vector<double> lanes, bool lane){
+	// calculate distance to the midline depending on the lane you are in
+	// according to that, calculate the angle of turn, and store it
+	distanceMiddle = calculateDistanceToMidline(lanes.at(X), lanes.at(Y), lane);
+	if(distanceMiddle > 0){
 		dir='l';
-		teta=(int) ( (float)(distance)/TURN_COEFICIENT);
+		teta=(int) ( (float)(distanceMiddle)/TURN_COEFICIENT);
+		lastNturns.push_back(LEFT);
 	}else{
 		dir='r';
-		teta= (int) ( (float)(-distance)/TURN_COEFICIENT);
+		teta= (int) ( (float)(-distanceMiddle)/TURN_COEFICIENT);
+		lastNturns.push_back(RIGHT);
 	}
-
-	message.str("");
-	message << dir << teta << endl;
-	putText(drawing, message.str(), Point2f(200,050), FONT_HERSHEY_PLAIN, 2, Scalar(255,255,0), 2);
-	serialPort.sendArray(message.str(), message.tellp());
-	
-	message.str("");
-	message << "d" << distance;
-	putText(drawing, message.str(), Point2f(350,050), FONT_HERSHEY_PLAIN, 2, Scalar(255,255,0), 2);
-
-
-	if(teta<=5&&teta>=-5)
-		straight_counter++;
-
+	//buffer only keeps 5, must delete the first
+	lastNturns.erase(lastNturns.begin());
 }
-
 //TODO
 // Routine that calculates wich is the lane to follow based on last followed lane
 // Returns the distance change
@@ -402,15 +378,16 @@ int get_line2follow(){
 	l_y=last_line2follow.at(Y);
 
 	// 1st attempt let's assume least distance equals the first (front) object
-	least_distance = sqrt( pow(l_x-line2follow.at(X),2) + pow(l_y-line2follow.at(Y),2) );
+	// makes distance on xx 1/2 of yy to make better turns
+	least_distance = sqrt( pow(l_x-line2follow.at(X),2) + Y_RATIO*pow(l_y-line2follow.at(Y),2) );
 
 	for( size_t i = 1; i< objects.size(); i++ ){
 		o_x = objects.at(i).at(X);
 		o_y = objects.at(i).at(Y);
 		if( (o_y>Y_MIN_TO_DETECT_LANE) && (o_y<Y_MAX_TO_DETECT_LANE) ){
 
-			calculated_distance = sqrt( pow(l_x-o_x, 2) + pow(l_y-o_y,2) );
-			if( calculated_distance < least_distance ){
+			calculated_distance = sqrt( pow(l_x-o_x, 2) + Y_RATIO*pow(l_y-o_y,2) );
+			if( calculated_distance < least_distance){
 				line2follow=objects.at(i);
 				least_distance=calculated_distance;
 			}
@@ -422,34 +399,101 @@ int get_line2follow(){
 	message.str("");
 	message << (int)line2follow.at(AREA) << " (" << (int)line2follow.at(X) << ", " << (int)line2follow.at(Y) << ")" << endl;
 	putText(drawing, message.str(), Point2f(50,75), FONT_HERSHEY_PLAIN, 2, Scalar(255,255,0), 2);
-	
 
-	if(line2follow.at(AREA)>175000){
-		//wanna_change=true;
-	}
 	return least_distance;
 }
+void send_command_arduino(){
+	
+	
+	serialPort.sendArray(turn_message.str());
+	//serialPort.sendArray(speed_message.str());
+	
+}
+char calculate_end_of_turn_side(){
+	int n_rights=0;
+	for(size_t i = 0; i<lastNturns.size(); i++){
+		if(lastNturns.at(i)==RIGHT){
+			n_rights++;
+		}
+	}
+	if(n_rights > (lastNturns.size()/2) )
+		return 'r';
+	else
+		return 'l';
+}
+void detect_end_of_turn(){
 
+	//if end of turn detected or in end of turn manouvre
+	if( (distance_from_last_lane > DISTANCE_OF_END_TURN) || (end_of_turn) ){
+		//Just do it for the first time
+		if( !end_of_turn){
+			if( abs(teta) < HORIZONTAL_LINE_THRESHOLD ){
+				
+				end_turn_dir=calculate_end_of_turn_side();
+				end_of_turn = true;
+				speed_message.str("");
+				speed_message << "f" << 5 << endl;
+				serialPort.sendArray(speed_message.str());
+				
+				//TURN LEFT
+				if(end_turn_dir=='l'){
+					for( size_t i = 1; i< objects.size(); i++ ){
+						if( abs(objects.at(i).at(Y)-line2follow.at(Y)) < HORIZONTAL ){
+							if(objects.at(i).at(X)<line2follow.at(X)){
+								line2follow = objects.at(i);
+								last_line2follow = objects.at(i);
+							}
+						}
+					}
+					turn_message << end_turn_dir << TETA_END_TURN_LEFT  << "\n";
+				}else{
+					for( size_t i = 1; i< objects.size(); i++ ){
+						if( abs(objects.at(i).at(Y)-line2follow.at(Y)) < HORIZONTAL ){
+							if(objects.at(i).at(X)>line2follow.at(X)){
+								line2follow = objects.at(i);
+								last_line2follow = objects.at(i);
+							}
+						}
+					}
+					turn_message << end_turn_dir << TETA_END_TURN_RIGHT << "\n";
+				}
+				
+				
+				
+				cout << endl << endl << "DETECTED SPIKE" << endl <<endl <<endl;
+				cout << "Going: " << end_turn_dir << endl;
+			}
+		}else{
+			if( abs(teta) < VERTICAL_LINE_THRESHOLD ){
+				//nothing
+			}else{
+				cout << "Ended!" << endl;
+				end_of_turn = false;
+				speed_message.str("");;
+				speed_message << "f" << SPEED << endl;
+				serialPort.sendArray(speed_message.str());
+			}
+		}
+	}else{
+		//apply the simple distance algorithm
+		turn_message.str("");
+		turn_message << dir << teta << "\n";
+	}
+}
 // Routine that decides wich routines to call based on events
-void move_in_lane(bool direction){
+void move_in_lane(bool lane){
 	vector<Point> discontinuousPoints;
 
 	if(objects.size()>=1){
-
 		distance_from_last_lane=get_line2follow();
-
-		if(wanna_change){
-			change_lane(direction);
-		}else{
-			simple_distance_lines(line2follow, direction);
-		}
-
+		simple_distance_lines(line2follow, lane);
+		detect_end_of_turn();
+		
+		cout << "Distance: " << distance_from_last_lane << " | Teta: " << teta << " | Dir: " << dir << endl;
 	}else{
 		cout << "No objects found" << endl;
 	}
 }
-
-//TODO
 // Finds objects that matter
 // Returns: Matriz of double (OBJECTS) - each line is an object
 // For each column:
@@ -462,6 +506,7 @@ void finding_objects(Mat frame){
 	vector<vector<Point> > contours;
 	std::stringstream s;
 	size_t i;
+	float teta_rad;
 	double area;
 
 	cvtColor(frame, frame, CV_BGR2GRAY);
@@ -488,10 +533,11 @@ void finding_objects(Mat frame){
 			objects.push_back( vector<double>(4, 0.0) );
 			objects.back().at(X)=(double)linReg.at(2);
 			objects.back().at(Y)=(double)linReg.at(3);
-			objects.back().at(TETA)=(atan(linReg[1]/linReg[0]) * 180.0/PI);
+			teta_rad=atan2f(linReg[1],linReg[0]);
+			objects.back().at(TETA)=(teta_rad/PI*180); // + ( teta_rad > 0 ? 0 : 360);
 			objects.back().at(AREA)=area;
 
-			drawFitLine(linReg, drawing, BLUE);
+			//drawFitLine(linReg, drawing, BLUE);
 			drawContours( drawing, contours, i, WHITE );
 			
 		}
@@ -504,8 +550,16 @@ void finding_objects(Mat frame){
 					//objects.at(i).at(TETA) << "; area: " << objects.at(i).at(AREA) << endl;
 		//}
 }
+void controller(bool direction){
 
+	finding_objects(image); //finds all relevant objects
+	move_in_lane(direction); // applies the movement prediction algorithm
+	send_command_arduino(); // sends data to arduino
+	
+	imshow("Drawing", drawing);
+	waitKey(1);
 
+}
 //TODO
 void *trackHandler(void*){
 	Timer timer;
@@ -514,8 +568,9 @@ void *trackHandler(void*){
 	
 	message.str("");
 	message << "n" << endl;
-	serialPort.sendArray(message.str(), message.tellp());
+	serialPort.sendArray(message.str());
 	sleep(1);
+	lastNturns.assign(N_TO_KEEP, 0); // adds N ints with value 0
 	// As the thing starts it will
 	while(true){
 		//signal=wait_signal();
@@ -527,9 +582,9 @@ void *trackHandler(void*){
 			find_first_object(RIGHT);
 
 			present_lane=OUTSIDE;
-			message.str("");
-			message << "f" << SPEED << endl;
-			serialPort.sendArray(message.str(), message.tellp());	
+			speed_message.str("");
+			speed_message << "f" << SPEED << endl;
+			serialPort.sendArray(speed_message.str());
 			while(!completed_lap){
 				//timer.reset();
 				image=UEye.getFrame();
@@ -538,10 +593,11 @@ void *trackHandler(void*){
 				
 				//timer.reset();
 				controller(RIGHT);
+				check_crossroad();
 				//cout << endl << "-------------------------" << endl << endl << "Controller procedure time: " << timer.elapsed() << endl;
 				//				cout << "Time elapsed: " << timer.elapsed() << endl;
 				if(wait_ESC()){
-					serialPort.sendArray("n",6);
+					serialPort.sendArray("n");
 					destroyAllWindows();
 					pthread_exit(NULL);
 				}
@@ -550,11 +606,10 @@ void *trackHandler(void*){
 			}
 		}else if(signal==YELLOW_LEFT){
 
-			straight_counter=0;
 			find_first_object(LEFT);
 			message.str("");
 			message << "f" << SPEED << endl;
-			serialPort.sendArray(message.str(), message.tellp());
+			serialPort.sendArray(message.str());
 
 			present_lane=OUTSIDE;
 			while(!completed_lap){
@@ -567,13 +622,14 @@ void *trackHandler(void*){
 				controller(LEFT);
 
 //				cout << "Time elapsed: " << timer.elapsed() << endl;
-//				if(wait_ESC()){
-//					destroyAllWindows();
-//					pthread_exit(NULL);
-//				}
+				if(wait_ESC()){
+					serialPort.sendArray("n");
+					destroyAllWindows();
+					pthread_exit(NULL);
+				}
 				//TODO stop at ZEBRAAAAAAAAA
 				//check_display_update();
-				if(present_lane==OUTSIDE && straight_counter>=10){
+				if(present_lane==OUTSIDE){
 					wanna_change=true;
 				}
 			}

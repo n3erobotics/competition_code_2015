@@ -8,6 +8,7 @@
 #ifndef TRACKHANDLER_H_
 #define TRACKHANDLER_H_
 
+
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -25,8 +26,8 @@ bool object_on_right(vector<double> line_object);
 bool object_on_left(vector<double> line_object);
 bool only_objects_on_right();
 bool only_objects_on_left();
-void simple_distance_lines(vector<double> lane, bool direction);
-void move_in_lane(bool direction);
+void simple_distance_lines(vector<double> lanes, bool lane);
+void move_in_lane(bool lane);
 void finding_objects(Mat cut_bin);
 void *trackHandler(void *v_serialPort);
 
