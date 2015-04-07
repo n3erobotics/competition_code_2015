@@ -56,7 +56,7 @@ void waiting(int key){
 	
 	cout << "Waiting key..." << endl;
 	while(true){
-		keyPressed=waitKey(-1);
+		keyPressed=waitKey(100);
 		if( keyPressed == key)
 			break;
 	}

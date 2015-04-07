@@ -65,52 +65,36 @@ UeyeOpencvCam::UeyeOpencvCam() {
                 cout << "Couldn't initialize camera, make sure it is connected!" << endl;
         }
         
-        //PIXEL CLOCK
-        UINT pixelClock = PIXELCLOCK;
-        is_PixelClock(hCam, IS_PIXELCLOCK_CMD_GET_RANGE, (void*)nRange, sizeof(nRange));
-		cout << "PIXELCLOCK Min: " << nRange[0]  << " Max: " << nRange[1] << endl;
-		retInt = is_PixelClock(hCam, IS_PIXELCLOCK_CMD_SET, (void*)&pixelClock, sizeof(pixelClock));
-		if (retInt != IS_SUCCESS) {
-			cout << "Couldn't set pixelclock range!" << endl;
-		}
-		is_PixelClock(hCam, IS_PIXELCLOCK_CMD_GET, (void*)&pixelClock, sizeof(pixelClock));
-		cout << "Using: " << pixelClock << endl;
-
-		//FRAMERATE
-		is_GetFrameTimeRange(hCam, &min, &max, &interval);
-		cout << "FRAMERATE Min: " << 1/min << " Max: " << 1/max << endl;
-		double NEWFPS;
-		retInt = is_SetFrameRate(hCam, FRAMERATE, &NEWFPS);
-		if (retInt != IS_SUCCESS) {
-				cout << "Couldn't set framerate!" << endl;
-		}
-
-		//is_GetFramesPerSecond(hCam, &FPS);
-		cout << "Using: " << NEWFPS << endl;
-		
-		//EXPOSURE
-		exposureTime = EXPOSURE;
-		is_Exposure(hCam, IS_EXPOSURE_CMD_GET_EXPOSURE_RANGE_MIN, (void*) &min, sizeof(min));
-		is_Exposure(hCam, IS_EXPOSURE_CMD_GET_EXPOSURE_RANGE_MAX, (void*) &max, sizeof(max));
-		cout << "EXPOSURE Min: " << min << " Max: " << max << endl;
-		retInt = is_Exposure(hCam, IS_EXPOSURE_CMD_SET_EXPOSURE, (void*) &exposureTime, sizeof(exposureTime));
-		if (retInt != IS_SUCCESS) {
-			cout << "Couldn't set exposure" << endl;
-		}
-		is_Exposure(hCam, IS_EXPOSURE_CMD_GET_EXPOSURE, (void*) &exposureTime, sizeof(exposureTime));
-		cout << "USING" << exposureTime << endl;
-
         retInt = is_SetColorMode(hCam, IS_CM_BGR8_PACKED);
         if (retInt != IS_SUCCESS) {
                 cout << "Couldn't set colormode" << endl;
         }
-        retInt = is_SetDisplayMode(hCam, IS_SET_DM_DIB);
-        if (retInt != IS_SUCCESS) {
-                cout << "Couldn't set displaymode" << endl;
-        }
         retInt = is_AOI(hCam, IS_AOI_IMAGE_SET_AOI, (void*)&rectAOI, sizeof(rectAOI));
         if (retInt != IS_SUCCESS) {
                 cout << "Couldn't set AOI" << endl;
+        }
+        INT gamma = GAMMA;
+        retInt = is_Gamma(hCam, IS_GAMMA_CMD_SET, (void *)&gamma, sizeof(gamma));
+        if (retInt != IS_SUCCESS) {
+                cout << "Couldn't set gamma" << endl;
+        }
+        INT temperature = RGB_COLOR_MODEL_ADOBE_RGB_D65;
+        retInt = is_ColorTemperature(hCam, COLOR_TEMPERATURE_CMD_SET_RGB_COLOR_MODEL, (void *)&temperature, sizeof(temperature));
+        if (retInt != IS_SUCCESS) {
+                cout << "Couldn't set temperature" << endl;
+        }
+        retInt = is_SetGainBoost(hCam, IS_SET_GAINBOOST_ON);
+        if (retInt != IS_SUCCESS) {
+                cout << "Couldn't set gainboost" << endl;
+        }
+        INT blacklevel = IS_AUTO_BLACKLEVEL_ON;
+        retInt = is_Blacklevel(hCam, IS_BLACKLEVEL_CMD_SET_MODE, (void*)&blacklevel, sizeof(blacklevel));
+        if (retInt != IS_SUCCESS) {
+                cout << "Couldn't set displaymode" << endl;
+        }
+        retInt = is_SetDisplayMode(hCam, IS_SET_DM_DIB);
+        if (retInt != IS_SUCCESS) {
+                cout << "Couldn't set displaymode" << endl;
         }
         retInt = is_ImageFormat(hCam, IMGFRMT_CMD_GET_ARBITRARY_AOI_SUPPORTED, (void*) &nAOISupported, sizeof(nAOISupported));
         if (retInt != IS_SUCCESS) {
@@ -132,7 +116,40 @@ UeyeOpencvCam::UeyeOpencvCam() {
         retInt = is_SetAutoParameter(hCam, IS_SET_ENABLE_AUTO_GAIN, &on, &empty);
         if (retInt != IS_SUCCESS) {
                 cout << "Couldn't set automatic gain" << endl;
-        }        
+        }
+        
+        //PIXEL CLOCK
+        UINT pixelClock = PIXELCLOCK;
+        is_PixelClock(hCam, IS_PIXELCLOCK_CMD_GET_RANGE, (void*)nRange, sizeof(nRange));
+		cout << "PIXELCLOCK Min: " << nRange[0]  << " Max: " << nRange[1] << endl;
+		retInt = is_PixelClock(hCam, IS_PIXELCLOCK_CMD_SET, (void*)&pixelClock, sizeof(pixelClock));
+		if (retInt != IS_SUCCESS) {
+			cout << "Couldn't set pixelclock range!" << endl;
+		}
+		is_PixelClock(hCam, IS_PIXELCLOCK_CMD_GET, (void*)&pixelClock, sizeof(pixelClock));
+		cout << "Using: " << pixelClock << endl;
+
+		//FRAMERATE
+		is_GetFrameTimeRange(hCam, &min, &max, &interval);
+		cout << "FRAMERATE Min: " << 1/min << " Max: " << 1/max << endl;
+		double NEWFPS;
+		retInt = is_SetFrameRate(hCam, FRAMERATE, &NEWFPS);
+		if (retInt != IS_SUCCESS) {
+				cout << "Couldn't set framerate!" << endl;
+		}
+		cout << "Using: " << NEWFPS << endl;
+
+		//EXPOSURE
+		exposureTime = EXPOSURE;
+		is_Exposure(hCam, IS_EXPOSURE_CMD_GET_EXPOSURE_RANGE_MIN, (void*) &min, sizeof(min));
+		cout << "EXPOSURE Min: " << min << " Max: " << max << endl;
+		retInt = is_Exposure(hCam, IS_EXPOSURE_CMD_SET_EXPOSURE, (void*) &exposureTime, sizeof(exposureTime));
+		if (retInt != IS_SUCCESS) {
+			cout << "Couldn't set exposure" << endl;
+		}
+		is_Exposure(hCam, IS_EXPOSURE_CMD_GET_EXPOSURE, (void*) &exposureTime, sizeof(exposureTime));
+		cout << "Using: " << exposureTime << endl;
+        
         retInt = is_CaptureVideo(hCam, IS_WAIT);
         if (retInt != IS_SUCCESS) {
                 cout << "Couldn't start video capture" << endl;
@@ -153,12 +170,13 @@ cv::Mat UeyeOpencvCam::getFrame() {
 
 void UeyeOpencvCam::getFrame_mem(cv::Mat& mat) {
         VOID* pMem;
+        
         int retInt = is_GetImageMem(hCam, &pMem);
         if (retInt != IS_SUCCESS) {
                 throw UeyeOpenCVException(hCam, retInt);
         }
 //      if (mat.cols == width && mat.rows == height && mat.depth() == 3) {
-                memcpy(mat.ptr(), pMem, AOIWIDTH * AOIHEIGHT * 3);
+                memcpy(mat.ptr(), pMem, AOIWIDTH * AOIHEIGHT * 3 );
 //      } else {
 //              throw UeyeOpenCVException(hCam, -1337);
 //      }

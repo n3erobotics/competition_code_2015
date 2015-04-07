@@ -45,7 +45,9 @@
 #define PIXELCLOCK 20
 #define FRAMERATE 30
 #define EXPOSURE 33
+#define GAMMA 100 // equals 1.00
 
+using namespace cv;
 /**
  * Wrapper class of UEye camera to support OpenCV Mat using the UEye SDK
  */
@@ -97,7 +99,7 @@ public:
         
 private:
         HIDS hCam;
-        cv::Mat mattie;
+        Mat mattie;
         int width;
         int height;
 };

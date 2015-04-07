@@ -21,11 +21,8 @@
 using namespace cv;
 using namespace std;
 
+void check_crossroad();
 int wait_signal();
-bool object_on_right(vector<double> line_object);
-bool object_on_left(vector<double> line_object);
-bool only_objects_on_right();
-bool only_objects_on_left();
 void simple_distance_lines(vector<double> lanes, bool lane);
 void move_in_lane(bool lane);
 void finding_objects(Mat cut_bin);

@@ -19,13 +19,13 @@ using namespace std;
 bool completed_lap = false;
 
 //Glabal Variables
-int stoped_detect_zebra, detected_n_zebra, laps;
+int stoped_detect_zebra, laps;
 bool detected_zebra=false;
 
 //Tracking variables
 int distance_from_last_lane=0;
 vector<double> line2follow, last_line2follow;
-vector<vector<double> > objects;
+vector< vector<double> > objects;
 bool present_lane = RIGHT; // boolean to represent which lane the car is
 bool end_of_turn=false; // boolean to sinalize if the turn ended (because of the big jump)
 vector<int> lastNturns; // stores the information of the inclination of the last 5 movements 
@@ -47,105 +47,52 @@ extern int display_detected, signal_detected;
 extern pthread_mutex_t access_webcam, access_displays, access_change;
 extern bool wanna_change;
 
-bool verify_inside_zebra(int upper_limit, int lower_limit){
-	vector<double> object_inside;
-	bool one_inside=false;
-	int N=objects.size()-1;
-
-	for(size_t i=0; i<objects.size(); i++){
-		// checks if one objects was found inside, if true checks if the object found now is paralel ( has aprox. same Y)
-		if( one_inside && ( abs(objects.at(i).at(Y)-object_inside.at(Y))<30 ) ){
-			// checks if they are too close to limits (false zebra)
-			return true;
-		}
-		// otherwise it'll see if
-		if( (objects.at(N-i).at(Y) < upper_limit-30) && (objects.at(N-i).at(Y) > lower_limit+30) ){
-			one_inside=true;
-			object_inside=objects.at(N-i);
-		}
-	}
-	return false;
-}
 // Routine that checks if there are 2 horizontal lines
 //TODO check if objects are inside those lines
 //to make sure it's a crossroad
 void check_crossroad(){
-	vector<double> zebra_lower, zebra_higher;
 	size_t no_objects=objects.size();
-	int o_t, o_y;
+	vector<double> zebra_low_part, zebra_high_part;
+	vector< vector<double> > vertical_lines;
 
 	// ONly makes sense if we detected 8 objects already
 	if(no_objects>8){
 		int count_horizontal_line=0;
 		bool found_zebra=false;
 		for( size_t i = 0; i< no_objects; i++ ){
-			//checks if it is inside the track
-			if(!object_on_right(objects.at(i))){
-				// checks horizontal line
-				o_t=objects.at(i).at(TETA);
-				if(( o_t<HORIZONTAL_LINE_THRESHOLD ) && ( o_t> -(HORIZONTAL_LINE_THRESHOLD) )){
-					count_horizontal_line++;
-					// saves values
-					if( count_horizontal_line==1 ){
-						zebra_lower=objects.at(i);
-						zebra_higher=objects.at(i);
-					}else{
-						o_y=objects.at(i).at(Y);
-						// if we have more than 1 line, let's compare
-						// compare if we have an horizontal line with bigger Y than another horizontal line
-						if( o_y>zebra_higher.at(Y) ){
-							// if the distance between those two zebra lines is too big or too small don't keep values
-							if( (o_y-zebra_lower.at(Y)<MAX_ZEBRA_HEIGHT) && (o_y-zebra_lower.at(Y)>MIN_ZEBRA_HEIGHT) ){
-								if( verify_inside_zebra( o_y,zebra_lower.at(Y) ) ){
-									zebra_higher=objects.at(i);
-									found_zebra=true;
+			vertical_lines.clear();
+			//if object is horizontal check if there's another
+			if( abs( objects.at(i).at(TETA) ) < HORIZONTAL_ANGLE ){
+				//let's check if there's another horizontal line
+				for( size_t j = i+1; j< no_objects; j++ ){
+					if( abs( objects.at(j).at(TETA) ) < HORIZONTAL_ANGLE ){
+						//check if the both objects are close enough to be in the zebra
+						if( (abs(objects.at(i).at(Y) - objects.at(j).at(Y)) < ZEBRA_Y_MAX_DISTANCE) && (abs(objects.at(i).at(X) - objects.at(j).at(X)) < ZEBRA_X_MAX_DISTANCE) ){
+							// who's the lower limit
+							if(objects.at(i).at(Y) < objects.at(j).at(Y)){
+								zebra_low_part = objects.at(i);
+								zebra_high_part = objects.at(j);
+							}else{
+								zebra_low_part = objects.at(j);
+								zebra_high_part = objects.at(i);
+							} 
+							// check how many lines inside "zebra" hipothesis
+							for(size_t k=0; k<no_objects; k++){
+								if( (k!=j) && (k!=i) ){
+									if( (objects.at(k).at(Y)>zebra_low_part.at(Y)) && (objects.at(k).at(Y)<zebra_high_part.at(Y)) ){
+										vertical_lines.push_back( objects.at(i) );
+									}
 								}
 							}
-						}
-						// compare if we have an horizontal line with lesser Y than another horizontal line
-						if( o_y<zebra_lower.at(Y) ){
-							// if the distance between those two zebra lines is too big or too small don't keep values
-							if( (zebra_higher.at(Y)-o_y<MAX_ZEBRA_HEIGHT) && (zebra_higher.at(Y)-o_y>MIN_ZEBRA_HEIGHT) ){
-								if( verify_inside_zebra( zebra_higher.at(Y), o_y ) ){
-									zebra_lower=objects.at(i);
-									found_zebra=true;
-								}
+							if( vertical_lines.size() == 7 ){
+								cout << "Puta zebra! E mesmo isto!" << endl;
+							}else if( vertical_lines.size() > 7 ){
+								cout << "Ve la bem essa merda!" <<endl;
 							}
 						}
 					}
 				}
 			}
-		}
-		if( found_zebra ){
-			detected_n_zebra++;
-			if(detected_n_zebra>=2 && !detected_zebra){
-				drawLane(zebra_lower,drawing, YELLOW );
-				drawLane(zebra_higher,drawing, YELLOW );
-				detected_zebra=true;
-				stoped_detect_zebra=0;
-				laps++;
-			}
-			for( size_t i = 0; (i < no_objects); i++ ){
-				// if the object match one horizontal zebra line it's removed
-				if( objects.at(i).at(Y)==zebra_lower.at(Y) || objects.at(i).at(Y)==zebra_higher.at(Y) ){
-					objects.erase (objects.begin()+i);
-					no_objects--;
-					i--;
-				}
-			}
-			stoped_detect_zebra=0;
-		}else{
-			if(stoped_detect_zebra>=3 && detected_zebra){
-				detected_zebra=false;
-				//just_passed_zebra=true;
-			}
-			detected_n_zebra=0;
-		}
-	}else{
-		stoped_detect_zebra++;
-		if(stoped_detect_zebra>=3 && detected_zebra){
-			detected_zebra=false;
-			detected_n_zebra=0;
 		}
 	}
 }
@@ -238,112 +185,10 @@ int wait_signal(){
 		}
 	}
 }
-//TODO
-bool object_on_right(vector<double> line_object){
-
-	if( (int)line_object.at(X) <= (int)(line2follow.at(X)+(cos(line2follow.at(TETA)*PI/180)*(line_object.at(Y)-line2follow.at(Y))))){
-		return false;
-	}else{
-		return true;
-	}
-}
-bool object_on_left(vector<double> line_object){
-
-	if( (int)line_object.at(X) >= (int)(line2follow.at(X)+(cos(line2follow.at(TETA)*PI/180)*(line_object.at(Y)-line2follow.at(Y))))){
-		return false;
-	}else{
-		return true;
-	}
-}
-bool only_objects_on_right(){
-	for(size_t i=0; i<objects.size(); i++){
-		//Condition to have objects on left and bellow
-		if( !object_on_right(objects.at(i)) ){
-			return false;
-		}
-	}
-	return true;
-}
-bool only_objects_on_left(){
-	for(size_t i=0; i<objects.size(); i++){
-		//Condition to have objects on left and bellow
-		if( object_on_right(objects.at(i)) ){
-			return false;
-		}
-	}
-	return true;
-}
-//TODO
 // Routine to change to "change_lane"
 void change_lane(bool direction){
-	int N=objects.size()-1;
 
-	// if in the right way (straight ahead)
-	if(!direction){
-		if(present_lane == OUTSIDE){
-			// If we are on right and we discover an object on left we follow it
-			for(size_t i=0; i<objects.size(); i++){
-				if( object_on_left(objects.at(N-i)) && objects.at(N-i).at(X)>width/3){
-					wanna_change=false;
-					last_line2follow=objects.at(N-i);
-					line2follow=objects.at(N-i);
-					present_lane=INSIDE;
-					return ;
-				}
-			}
-			putText(drawing, "CHANGING", Point2f(350,250), FONT_HERSHEY_PLAIN, 2, Scalar(255,255,0), 2);
-			message.str("");
-			message << "l" << CHANGE_2LEFT_LANE_ANGLE << endl;
-			serialPort.sendArray(message.str());
-		}else{
-			// If we are on left and we discover an object on right we follow it
-			for(size_t i=0; i<objects.size(); i++){
-				if( object_on_right(objects.at(i)) ){
-					wanna_change=false;
-					last_line2follow=objects.at(i);
-					line2follow=objects.at(i);
-					present_lane=OUTSIDE;
-					return ;
-				}
-			}
-			putText(drawing, "CHANGING", Point2f(350,250), FONT_HERSHEY_PLAIN, 2, Scalar(255,255,0), 2);
-			message.str("");
-			message << "r" << CHANGE_2RIGHT_LANE_ANGLE << endl;
-			serialPort.sendArray(message.str());
-		}
-	}else{
-		if(present_lane == OUTSIDE){
-			// If we are on right and we discover an object on left we follow it
-			for(size_t i=0; i<objects.size(); i++){
-				if( object_on_left(objects.at(N-i)) && objects.at(N-i).at(X)>width/3){
-					wanna_change=false;
-					last_line2follow=objects.at(N-i);
-					line2follow=objects.at(N-i);
-					present_lane=INSIDE;
-					return ;
-				}
-			}
-			putText(drawing, "CHANGING", Point2f(350,250), FONT_HERSHEY_PLAIN, 2, Scalar(255,255,0), 2);
-			message.str("");
-			message << "r" << CHANGE_2LEFT_LANE_ANGLE << endl;
-			serialPort.sendArray(message.str());
-		}else{
-			// If we are on left and we discover an object on right we follow it
-			for(size_t i=0; i<objects.size(); i++){
-				if( object_on_right(objects.at(i)) ){
-					wanna_change=false;
-					last_line2follow=objects.at(i);
-					line2follow=objects.at(i);
-					present_lane=OUTSIDE;
-					return ;
-				}
-			}
-			putText(drawing, "CHANGING", Point2f(350,250), FONT_HERSHEY_PLAIN, 2, Scalar(255,255,0), 2);
-			message.str("");
-			message << "l" << CHANGE_2LEFT_LANE_ANGLE << endl;
-			serialPort.sendArray(message.str());
-		}
-	}
+	present_lane = LEFT;
 }
 //TODO
 // Routine that calculates servo rotation from distance of the line
@@ -367,7 +212,7 @@ void simple_distance_lines(vector<double> lanes, bool lane){
 // Routine that calculates wich is the lane to follow based on last followed lane
 // Returns the distance change
 int get_line2follow(){
-	int l_x,l_y, o_x, o_y, least_distance, calculated_distance;
+	int l_x,l_y, o_x, o_y, o_a, least_distance, calculated_distance;
 
 	//Let's assume that
 	line2follow=objects.front();
@@ -384,7 +229,8 @@ int get_line2follow(){
 	for( size_t i = 1; i< objects.size(); i++ ){
 		o_x = objects.at(i).at(X);
 		o_y = objects.at(i).at(Y);
-		if( (o_y>Y_MIN_TO_DETECT_LANE) && (o_y<Y_MAX_TO_DETECT_LANE) ){
+		o_a = objects.at(i).at(AREA);
+		if( (o_y>Y_MIN_TO_DETECT_LANE) && (o_y<Y_MAX_TO_DETECT_LANE)){
 
 			calculated_distance = sqrt( pow(l_x-o_x, 2) + Y_RATIO*pow(l_y-o_y,2) );
 			if( calculated_distance < least_distance){
@@ -534,10 +380,10 @@ void finding_objects(Mat frame){
 			objects.back().at(X)=(double)linReg.at(2);
 			objects.back().at(Y)=(double)linReg.at(3);
 			teta_rad=atan2f(linReg[1],linReg[0]);
-			objects.back().at(TETA)=(teta_rad/PI*180); // + ( teta_rad > 0 ? 0 : 360);
+			objects.back().at(TETA)=(teta_rad/PI*180); //+ ( teta_rad > 0 ? 0 : 360);
 			objects.back().at(AREA)=area;
 
-			//drawFitLine(linReg, drawing, BLUE);
+			drawFitLine(linReg, drawing, BLUE);
 			drawContours( drawing, contours, i, WHITE );
 			
 		}
@@ -545,10 +391,12 @@ void finding_objects(Mat frame){
 	// Sorts objects from parameter AREA
 	stable_sort( objects.begin(), objects.end(), compare_t( objects, X ) );
 
-		//for(  i = 0; i< objects.size(); i++ ){
-			//cout << "#" << i << " ( " << objects.at(i).at(X) << " , " << objects.at(i).at(Y) << " ) teta:" <<
-					//objects.at(i).at(TETA) << "; area: " << objects.at(i).at(AREA) << endl;
-		//}
+	//cout << endl << endl << endl << endl << endl << endl << endl << endl << endl << endl;
+	//for(  i = 0; i< objects.size(); i++ ){
+		//cout << "#" << i << " ( " << objects.at(i).at(X) << " , " << objects.at(i).at(Y) << " ) teta:" <<
+				//objects.at(i).at(TETA) << "; area: " << objects.at(i).at(AREA) << endl;
+	//}
+
 }
 void controller(bool direction){
 
@@ -566,6 +414,14 @@ void *trackHandler(void*){
 	std::stringstream s;
 	int signal;
 	
+	while(1){
+		image=UEye.getFrame();
+		finding_objects(image);
+		check_crossroad();
+		imshow("drawing",drawing);
+		waiting(ESC);
+		
+	}
 	message.str("");
 	message << "n" << endl;
 	serialPort.sendArray(message.str());
@@ -588,7 +444,7 @@ void *trackHandler(void*){
 			while(!completed_lap){
 				//timer.reset();
 				image=UEye.getFrame();
-				imshow("IMAGE",image);
+				//imshow("IMAGE",image);
 				//cout << endl << "-------------------------" << endl << endl << "Capture frame time: " << timer.elapsed() << endl;
 				
 				//timer.reset();
