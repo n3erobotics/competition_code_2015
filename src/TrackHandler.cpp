@@ -12,6 +12,8 @@
 #include "UEyeOpenCV.hpp"
 #include <string>
 
+//#define DEBUG
+
 using namespace cv;
 using namespace std;
 
@@ -56,23 +58,32 @@ void check_crossroad(){
 	vector<size_t> indexes;
 	vector< vector<double> > vertical_lines;
 	size_t index_best_distance=0;
-	cout << "Entrei nesta merda" <<endl;
 	detected_zebra = false;
 	// ONly makes sense if we detected 9 objects already (2 vertical lines and 7 horizontal)
 	if(no_objects>11){
 		for( size_t i = 0; i< objects.size(); i++ ){
+			#ifdef DEBUG
 			cout << "a1 " << i <<endl;
+			#endif
 			//if object is horizontal check if there's another
 			if( abs( objects.at(i).at(TETA) ) < HORIZONTAL_ANGLE ){
+				#ifdef DEBUG
 				cout << "a2 " <<endl;
+				#endif
 				//let's check if there's another horizontal line
 				for( size_t j = i+1; j< objects.size(); j++ ){
+					#ifdef DEBUG
 					cout << "a3 " << j <<endl;
+					#endif
 					if( (abs( objects.at(j).at(TETA) ) < HORIZONTAL_ANGLE) ){
+						#ifdef DEBUG
 						cout << "a4 " <<endl;
+						#endif
 						//check if both objects are close enough to be in the zebra, but not too close
 						if( (abs(objects.at(i).at(Y) - objects.at(j).at(Y)) < ZEBRA_Y_MAX_DISTANCE) && (abs(objects.at(i).at(X) - objects.at(j).at(X)) < ZEBRA_X_MAX_DISTANCE) && (abs(objects.at(i).at(Y) - objects.at(j).at(Y)) > ZEBRA_Y_MIN_DISTANCE) ){
+							#ifdef DEBUG
 							cout << "a5" <<endl;
+							#endif
 							// who's the lower limit
 							if(objects.at(i).at(Y) < objects.at(j).at(Y)){
 								zebra_low_part = objects.at(i);
@@ -85,23 +96,30 @@ void check_crossroad(){
 							// check how many lines inside "zebra" hipothesis
 							int o_y;
 							for(size_t k=0; k<no_objects; k++){
+								#ifdef DEBUG
 								cout << "a6 " << k <<endl;
+								#endif
 								if( (k!=j) && (k!=i) ){
 									o_y = objects.at(k).at(Y);
 									if( (o_y > zebra_low_part.at(Y)) && (o_y < zebra_high_part.at(Y)) ){
-										cout << "Detected at " << k << " with (" << objects.at(k).at(X) << ", " << objects.at(k).at(Y) << ")" << endl;
+										#ifdef DEBUG
+										cout << "Detected at " << k << " with (" << objects.at(k).at(X) << ", " << objects.at(k).at(Y) << ") " << objects.at(k).at(TETA) << endl;
+										#endif
 										vertical_lines.push_back( objects.at(k) );
 										indexes.push_back(k);
 									}
 								}
 							}
+							#ifdef DEBUG
 							cout << "a7 " <<endl;
+							#endif
 							if( vertical_lines.size() == 7 ){
-								cout << "foi aqui" << endl;
 								detected_zebra = true;
 							}else if( vertical_lines.size() > 7 ){
 								detected_zebra = true;
+								#ifdef DEBUG
 								cout << "a8 " <<endl;
+								#endif
 								//calculate the supposed x mid point
 								// delete the most distant points from midpoint
 								int mid_point = ((zebra_high_part.at(X)+zebra_low_part.at(X))/2);
@@ -111,14 +129,18 @@ void check_crossroad(){
 									int worst_distance = abs(vertical_lines.at(0).at(X)-mid_point);
 									// check if any of those points has worst distance
 									for(size_t index = 1; index < vertical_lines.size(); index++){
+										#ifdef DEBUG
 										cout << "a9 " << index <<endl;
+										#endif
 										d = abs(vertical_lines.at(index).at(X)-mid_point);
 										if( d > worst_distance){
 											index_worst_distance = index;
 											worst_distance = d;
 										}
 									}
+									#ifdef DEBUG
 									cout << "a10 " << i <<endl;
+									#endif
 									// delete that shit nigga
 									vertical_lines.erase(vertical_lines.begin() + index_worst_distance);
 									indexes.erase(indexes.begin() + index_worst_distance);
@@ -128,23 +150,29 @@ void check_crossroad(){
 							}
 							// since objects are sorted by X, 4 is the middle one
 							// compare the distance with mid points
+							#ifdef DEBUG
 							cout << "a11 " <<endl;
+							#endif
 							int mid_point = ((zebra_high_part.at(X)+zebra_low_part.at(X))/2);
 							if( abs(mid_point-vertical_lines.at(3).at(X)) < (ZEBRA_X_MAX_DISTANCE) ){
+								#ifdef DEBUG
 								cout << "a12 "<<endl;
+								#endif
 								int best_distance = abs(vertical_lines.at(0).at(X)-((zebra_high_part.at(X)+zebra_low_part.at(X))/2));
-								int d,n;
+								int d,n=0;
 								// find the middle zebra strip
 								for(size_t index = 1; index < vertical_lines.size(); index++){
+									#ifdef DEBUG
 									cout << "a13 " << index <<endl;
+									#endif
 									d = abs(vertical_lines.at(index).at(X)-mid_point);
 									if( d < best_distance){
 										index_best_distance = index;
 										best_distance = d;
 									}
-									if(vertical_lines.at(index).at(TETA)<HORIZONTAL_ANGLE){
+									if( abs(vertical_lines.at(index).at(TETA))<HORIZONTAL_ANGLE){
 										n++;
-										if(n>3){
+										if(n>2){
 											detected_zebra = false;
 											cout << "Pocaralho não menganas" <<endl;
 											break;
@@ -158,7 +186,9 @@ void check_crossroad(){
 							if(detected_zebra){
 								//delete all zebra objects detected except the midline one
 								for(int i = indexes.size()-1; i >= 0; i--){
+									#ifdef DEBUG
 									cout << "a14 " << i <<endl;
+									#endif
 									size_t j=i;
 									if(j!=index_best_distance){
 										objects.erase(objects.begin() + indexes.at(j));
@@ -169,7 +199,6 @@ void check_crossroad(){
 						}
 					}
 				}
-				cout << "breakei mano" <<endl;
 			}
 			if(detected_zebra){
 				cout << "PASSADEIRA" <<endl;
@@ -187,7 +216,6 @@ void check_crossroad(){
 			}
 		}
 	}
-	cout << " Sai deste coco" <<endl;
 }
 void check_display_update(){
 	pthread_mutex_lock(&access_displays);
@@ -371,7 +399,7 @@ void detect_end_of_turn(){
 				end_of_turn = true;
 				speed_message.str("");
 				speed_message << "f" << 5 << endl;
-				serialPort.sendArray(speed_message.str());
+				//serialPort.sendArray(speed_message.str());
 				
 				//TURN LEFT
 				if(end_turn_dir=='l'){
@@ -402,15 +430,25 @@ void detect_end_of_turn(){
 				cout << "Going: " << end_turn_dir << endl;
 			//
 		}else{
-			if( abs(teta) < VERTICAL_LINE_THRESHOLD ){
-				//nothing
-			}else{
-				cout << "**************************************Ended!**************************************" << endl;
-				end_of_turn = false;
-				speed_message.str("");;
-				speed_message << "f" << SPEED << endl;
-				serialPort.sendArray(speed_message.str());
+			if(end_turn_dir == 'l'){
+				if( distanceMiddle > 0 ){
+					cout << "**************************************Ended!**************************************" << endl;
+					end_of_turn = false;
+					speed_message.str("");;
+					speed_message << "f" << SPEED << endl;
+					serialPort.sendArray(speed_message.str());
+				}
 			}
+			if(end_turn_dir == 'r'){
+				if( distanceMiddle < 0 ){
+					cout << "**************************************Ended!**************************************" << endl;
+					end_of_turn = false;
+					speed_message.str("");;
+					speed_message << "f" << SPEED << endl;
+					serialPort.sendArray(speed_message.str());
+				}
+			}
+			
 		}
 	}else{
 		//apply the simple distance algorithm
@@ -421,13 +459,9 @@ void detect_end_of_turn(){
 // Routine that decides wich routines to call based on events
 void move_in_lane(bool lane){
 	if(objects.size()>=1){
-		cout << "b1" <<endl;
 		distance_from_last_lane=get_line2follow();
-		cout << "b2" <<endl;
 		simple_distance_lines(line2follow, lane);
-		cout << "b3" <<endl;
 		detect_end_of_turn();
-		cout << "b4" <<endl;
 		
 		cout << "Distance: " << distance_from_last_lane << " | Teta: " << teta << " | Dir: " << dir << endl;
 	}else{
