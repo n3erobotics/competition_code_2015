@@ -39,9 +39,9 @@
 #include "UEyeOpenCVException.hpp"
 
 #define AOIX 0
-#define AOIY 240
+#define AOIY 260
 #define AOIWIDTH 752
-#define AOIHEIGHT 200
+#define AOIHEIGHT 180
 #define PIXELCLOCK 20
 #define FRAMERATE 30
 #define EXPOSURE 33

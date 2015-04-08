@@ -27,5 +27,7 @@ void simple_distance_lines(vector<double> lanes, bool lane);
 void move_in_lane(bool lane);
 void finding_objects(Mat cut_bin);
 void *trackHandler(void *v_serialPort);
+void virar_esquerda();
+void virar_direita();
 
 #endif /* TRACKHANDLER_H_ */

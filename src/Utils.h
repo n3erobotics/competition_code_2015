@@ -44,6 +44,8 @@
 #define BLUE Scalar(255,0,0)
 #define WHITE Scalar( 255, 255,255 )
 #define YELLOW Scalar(0,255,255)
+#define MAGENTA Scalar(255,0,255)
+#define CIAN Scalar(255,255,0)
 
 using namespace cv;
 

@@ -40,7 +40,7 @@ using namespace std;
 UeyeOpencvCam::UeyeOpencvCam() {
         using std::cout;
         using std::endl;
-        mattie = cv::Mat(AOIHEIGHT, AOIWIDTH, CV_8UC3);
+        mattie = cv::Mat(AOIHEIGHT, AOIWIDTH, CV_8UC1);
         hCam = 0;
         char* ppcImgMem;
         int pid;
@@ -65,7 +65,8 @@ UeyeOpencvCam::UeyeOpencvCam() {
                 cout << "Couldn't initialize camera, make sure it is connected!" << endl;
         }
         
-        retInt = is_SetColorMode(hCam, IS_CM_BGR8_PACKED);
+        //retInt = is_SetColorMode(hCam, IS_CM_BGR8_PACKED);
+        retInt = is_SetColorMode(hCam, IS_CM_MONO8);
         if (retInt != IS_SUCCESS) {
                 cout << "Couldn't set colormode" << endl;
         }
@@ -82,6 +83,10 @@ UeyeOpencvCam::UeyeOpencvCam() {
         retInt = is_ColorTemperature(hCam, COLOR_TEMPERATURE_CMD_SET_RGB_COLOR_MODEL, (void *)&temperature, sizeof(temperature));
         if (retInt != IS_SUCCESS) {
                 cout << "Couldn't set temperature" << endl;
+        }
+        retInt = is_SetHardwareGain(hCam, 100, IS_IGNORE_PARAMETER, IS_IGNORE_PARAMETER, IS_IGNORE_PARAMETER);
+        if (retInt != IS_SUCCESS) {
+                cout << "Couldn't set gainboost" << endl;
         }
         retInt = is_SetGainBoost(hCam, IS_SET_GAINBOOST_ON);
         if (retInt != IS_SUCCESS) {
@@ -100,7 +105,7 @@ UeyeOpencvCam::UeyeOpencvCam() {
         if (retInt != IS_SUCCESS) {
                 cout << "Couldn't set image format" << endl;
         }
-        retInt = is_AllocImageMem(hCam, AOIWIDTH, AOIHEIGHT, 24, &ppcImgMem, &pid);
+        retInt = is_AllocImageMem(hCam, AOIWIDTH, AOIHEIGHT, 8, &ppcImgMem, &pid);
         if (retInt != IS_SUCCESS) {
                 cout << "Couldn't allocate memory for image" << endl;
         }
@@ -176,7 +181,7 @@ void UeyeOpencvCam::getFrame_mem(cv::Mat& mat) {
                 throw UeyeOpenCVException(hCam, retInt);
         }
 //      if (mat.cols == width && mat.rows == height && mat.depth() == 3) {
-                memcpy(mat.ptr(), pMem, AOIWIDTH * AOIHEIGHT * 3 );
+                memcpy(mat.ptr(), pMem, AOIWIDTH * AOIHEIGHT );
 //      } else {
 //              throw UeyeOpenCVException(hCam, -1337);
 //      }

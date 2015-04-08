@@ -1,3 +1,4 @@
+
 /*
  * Utils.cpp
  *
@@ -42,7 +43,7 @@ Mat get_frame(VideoCapture webcam){
 
 bool wait_ESC(){
 
-	if(waitKey(3)==ESC){
+	if(waitKey(10)==ESC){
 		cout << "ESC key pressed by user" << endl;
 		serialPort.sendArray("n\n");
 		serialPort.sendArray("r0\n");
