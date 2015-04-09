@@ -20,6 +20,8 @@
 using namespace cv;
 using namespace std;
 
+Timer timer;
+
 // Events
 bool completed_lap = false;
 
@@ -455,12 +457,11 @@ void finding_objects(Mat frame){
 	double area;
 	Mat img;
 
-;
-
-
 	//cvtColor(frame, frame, CV_BGR2GRAY);
-	GaussianBlur(frame, img, Size(0, 0), 4);
+	timer.reset();
+	GaussianBlur(frame, img, Size(0, 0), 2);
 	addWeighted(frame, 1.5, img, -1, 0, img);
+	cout << "Time elapsed: " << timer.elapsed() << endl;
 #ifdef SHOW_IMAGE
 	imshow("frame",frame);
 	imshow("img",img);
