@@ -342,7 +342,7 @@ void send_command_arduino(){
 
 }
 char calculate_end_of_turn_side(){
-	int n_rights=0;
+	size_t n_rights=0;
 	for(size_t i = 0; i<lastNturns.size(); i++){
 		if(lastNturns.at(i)==RIGHT){
 			n_rights++;
@@ -462,7 +462,7 @@ void finding_objects(Mat frame){
 	GaussianBlur(frame, img, Size(0, 0), 3);
 	addWeighted(frame, 1.5, img, -0.5, 0, img);
 #ifdef SHOW_IMAGE
-	imshow("frame",frame)
+	imshow("frame",frame);
 	imshow("img",img);
 #endif
 	threshold( img, frame, BINAY_THRESHOLD,255,THRESH_BINARY);
