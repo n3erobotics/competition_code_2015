@@ -24,7 +24,7 @@
 #define Y_MAX_TO_DETECT_LANE 155
 #define Y_MIN_TO_DETECT_LANE 0
 #define Y_RATIO 1
-#define AREA_TO_DETECT 25
+#define AREA_TO_DETECT 30
 
 //Zebra
 #define HORIZONTAL_ANGLE 7.5
