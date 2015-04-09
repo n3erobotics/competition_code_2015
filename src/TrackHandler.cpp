@@ -135,7 +135,7 @@ void check_crossroad(){
 										index_best_distance = index;
 										best_distance = d;
 									}
-									if( abs(vertical_lines.at(index).at(TETA))<HORIZONTAL_ANGLE){
+									if( abs(vertical_lines.at(index).at(TETA)) < HORIZONTAL_ANGLE ){
 										n++;
 										if(n>2){
 											detected_zebra = false;
@@ -148,18 +148,25 @@ void check_crossroad(){
 							}else{
 								detected_zebra = false;
 							}
+							// delete objects of crossroad
 							if(detected_zebra){
-								//delete all zebra objects detected except the midline one
-								for(int i = indexes.size()-1; i >= 0; i--){
-									size_t j=i;
-									if(j!=index_best_distance){
-										objects.erase(objects.begin() + indexes.at(j));
+								// delete horizontal lines
+								objects.erase(objects.begin() + i);
+								objects.erase(objects.begin() + j);
+								//delete all vertical lines
+								for(int k = indexes.size()-1; k >= 0; k--){
+									size_t l=k;
+									if(l!=index_best_distance){
+										objects.erase(objects.begin() + indexes.at(l));
 									}
 								}
 								break;
 							}
 						}
 					}
+				}
+				if(detected_zebra){
+					break;
 				}
 			}
 			if(detected_zebra){
