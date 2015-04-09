@@ -44,7 +44,7 @@
 #define AOIHEIGHT 180
 #define PIXELCLOCK 20
 #define FRAMERATE 30
-#define EXPOSURE 1
+#define EXPOSURE 30
 #define GAMMA 100 // equals 1.00
 
 using namespace cv;
