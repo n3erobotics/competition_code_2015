@@ -13,7 +13,7 @@
 #include <string>
 
 #define DEBUG
-//#define SHOW_IMAGE
+#define SHOW_IMAGE
 #define SHOW_DRAWING
 #define END_TURN
 
