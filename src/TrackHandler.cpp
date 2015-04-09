@@ -63,7 +63,7 @@ void check_crossroad(){
 	size_t index_best_distance=0;
 	detected_zebra = false;
 	// ONly makes sense if we detected 9 objects already (2 vertical lines and 7 horizontal) + 2 linhas
-	if(no_objects>=11){
+	if( (no_objects>=11) && (!end_of_turn)){
 		for( size_t i = 0; i< objects.size(); i++ ){
 			//if object is horizontal check if there's another
 			if( abs( objects.at(i).at(TETA) ) < HORIZONTAL_ANGLE ){
@@ -361,7 +361,7 @@ void detect_end_of_turn(){
 //if end of turn detected or in end of turn manouvre
 #ifdef END_TURN
 	int initial_y = line2follow.at(Y);
-	if( (distance_from_last_lane > DISTANCE_OF_END_TURN) || (end_of_turn) ){
+	if( (detected_zebra) && ((distance_from_last_lane > DISTANCE_OF_END_TURN) || (end_of_turn)) ){
 		//Just do it for the first time
 		if( !end_of_turn){
 			//if( abs(teta) < HORIZONTAL_LINE_THRESHOLD ){
