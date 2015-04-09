@@ -395,7 +395,7 @@ void detect_end_of_turn(){
 			//
 		}else{
 			if(end_turn_dir == 'l'){
-				if( distanceMiddle > 0 ){
+				if( (distanceMiddle > 0) &&  (teta > (2 * HORIZONTAL)) ){
 					cout << "**************************************Ended!**************************************" << endl;
 					end_of_turn = false;
 					speed_message.str("");;
@@ -404,7 +404,7 @@ void detect_end_of_turn(){
 				}
 			}
 			if(end_turn_dir == 'r'){
-				if( distanceMiddle < 0 ){
+				if( (distanceMiddle < 0) && (teta > (2 * HORIZONTAL))){
 					cout << "**************************************Ended!**************************************" << endl;
 					end_of_turn = false;
 					speed_message.str("");;
