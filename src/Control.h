@@ -15,7 +15,7 @@
 #define N_TO_KEEP 7
 #define TETA_END_TURN_LEFT 14
 #define TETA_END_TURN_RIGHT 35
-#define HORIZONTAL 8
+#define HORIZONTAL 5
 #define HORIZONTAL_LINE_THRESHOLD 25
 #define VERTICAL_LINE_THRESHOLD 30
 
@@ -23,7 +23,7 @@
 #define SPEED 10
 #define Y_MAX_TO_DETECT_LANE 155
 #define Y_MIN_TO_DETECT_LANE 0
-#define Y_RATIO 0.9
+#define Y_RATIO 1
 #define AREA_TO_DETECT 40
 
 //Zebra
