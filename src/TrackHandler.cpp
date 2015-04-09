@@ -161,7 +161,6 @@ void check_crossroad(){
 									}
 								}
 								break;
-
 							}
 						}
 					}
