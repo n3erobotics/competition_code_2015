@@ -427,7 +427,7 @@ void move_in_lane(bool lane){
 		simple_distance_lines(line2follow, lane);
 		detect_end_of_turn();
 
-		cout << "Distance last: " << distance_from_last_lane << "Distance middle" << distanceMiddle << " | Teta: " << teta << " | Dir: " << dir << endl;
+		cout << "Distance last: " << distance_from_last_lane << " | Distance middle: " << distanceMiddle << " | Teta: " << teta << " | Dir: " << dir << endl;
 	}else{
 		cout << "No objects found" << endl;
 	}
