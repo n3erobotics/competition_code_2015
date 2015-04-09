@@ -89,7 +89,7 @@ void check_crossroad(){
 								if( (k!=j) && (k!=i) ){
 									o_y = objects.at(k).at(Y);
 									if( (o_y > zebra_low_part.at(Y)) && (o_y < zebra_high_part.at(Y)) ){
-										if( (abs(o_y-zebra_low_part.at(Y)) < HORIZONTAL) &&   (abs(o_y-zebra_high_part.at(Y)) < HORIZONTAL) ){
+										if( (abs(o_y-zebra_low_part.at(Y)) > HORIZONTAL) || (abs(o_y-zebra_high_part.at(Y)) > HORIZONTAL) ){
 											vertical_lines.push_back( objects.at(k) );
 											indexes.push_back(k);
 										}
@@ -390,7 +390,7 @@ void detect_end_of_turn(){
 
 
 
-			cout << endl << endl << "****************************************************************************DETECTED SPIKE**************************************" << endl <<endl <<endl;
+			cout << endl << endl << "**************************************DETECTED SPIKE**************************************" << endl <<endl <<endl;
 			cout << "Going: " << end_turn_dir << endl;
 			//
 		}else{
