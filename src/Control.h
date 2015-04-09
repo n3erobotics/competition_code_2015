@@ -9,7 +9,7 @@
 #define BINAY_THRESHOLD 130
 
 //Track image controls
-#define DISTANCE_OF_END_TURN 100
+#define DISTANCE_OF_END_TURN 105
 #define MID_LINE_DISTANCE 110
 #define TURN_COEFICIENT 2.75
 #define N_TO_KEEP 3

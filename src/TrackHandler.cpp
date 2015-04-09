@@ -170,7 +170,7 @@ void check_crossroad(){
 				}
 			}
 			if(detected_zebra){
-				cout << "PASSADEIRA" <<endl;
+				cout << "**************************************PASSADEIRA**************************************" <<endl;
 				//cout << "zebra: (" <<zebra_low_part.at(X) << ", " << zebra_low_part.at(Y) << ")  (" <<zebra_high_part.at(X) << ", " << zebra_high_part.at(Y) <<endl; 
 				drawLane(zebra_high_part, drawing, MAGENTA);
 				drawLane(zebra_low_part, drawing, MAGENTA);
