@@ -100,6 +100,4 @@ public:
 private:
         HIDS hCam;
         Mat mattie;
-        int width;
-        int height;
 };

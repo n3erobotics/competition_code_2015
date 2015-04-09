@@ -28,7 +28,7 @@ public:
 	void disconnect(void);
 
 	void sendArray(string buffer);
-	int getArray (string *buffer, int len);
+	int getArray (string *buffer);
 
 	int bytesToRead();
 	void clear();

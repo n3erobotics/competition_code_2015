@@ -11,8 +11,6 @@
 
 #include "SerialPort.h"
 
-extern pthread_mutex_t access_HUB;
-
 int SerialPort::connect(const char device[]) {
 	struct termios terminalAttributes;
 
@@ -110,15 +108,23 @@ void SerialPort::sendArray(string buffer) {
 		cout << "ERROR: \"" << buffer.c_str()<< "\"  not sent through SERIALPORT" << endl;
 }
 
-int SerialPort::getArray (string *buffer, int len)
-{
-	int n=0;
-	char c_buffer[len];
-	if(bytesToRead()>=len){
-		n=read(fileDescriptor, c_buffer, len);
-		buffer->assign(c_buffer);
-	}
-	tcflush(fileDescriptor, TCIFLUSH);
+int SerialPort::getArray (string *buffer){
+	int n = 0, spot = 0;
+	char c = '\0';
+
+	/* Whole response*/
+	char response[1024];
+	buffer->clear();
+	memset(response, '\0', sizeof response);
+
+	do {
+	   n = read( fileDescriptor, &c, 1 );
+	   sprintf( &response[spot], "%c", c );
+	   spot += n;
+	   cout << "n: " << n << endl;
+	} while( c != '\n' && n > 0);
+	buffer->assign(response);
+
 	return n;
 }
 
