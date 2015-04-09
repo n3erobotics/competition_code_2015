@@ -460,7 +460,7 @@ void finding_objects(Mat frame){
 	//cvtColor(frame, frame, CV_BGR2GRAY);
 	timer.reset();
 	GaussianBlur(frame, img, Size(0, 0), 2);
-	addWeighted(frame, 1.5, img, -1, 0, img);
+	addWeighted(frame, 1.5, img, -0.5, 0, img);
 	cout << "Time elapsed: " << timer.elapsed() << endl;
 #ifdef SHOW_IMAGE
 	imshow("frame",frame);
