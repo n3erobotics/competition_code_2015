@@ -9,7 +9,7 @@
 #define BINAY_THRESHOLD 130
 
 //Track image controls
-#define DISTANCE_OF_END_TURN 95
+#define DISTANCE_OF_END_TURN 100
 #define MID_LINE_DISTANCE 110
 #define TURN_COEFICIENT 2.75
 #define N_TO_KEEP 7
@@ -24,7 +24,7 @@
 #define Y_MAX_TO_DETECT_LANE 155
 #define Y_MIN_TO_DETECT_LANE 0
 #define Y_RATIO 1
-#define AREA_TO_DETECT 40
+#define AREA_TO_DETECT 25
 
 //Zebra
 #define HORIZONTAL_ANGLE 7.5
