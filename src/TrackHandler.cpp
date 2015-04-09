@@ -459,8 +459,8 @@ void finding_objects(Mat frame){
 
 
 	//cvtColor(frame, frame, CV_BGR2GRAY);
-	GaussianBlur(frame, img, Size(0, 0), 3);
-	addWeighted(frame, 1.5, img, -0.5, 0, img);
+	GaussianBlur(frame, img, Size(0, 0), 4);
+	addWeighted(frame, 1.5, img, -1, 0, img);
 #ifdef SHOW_IMAGE
 	imshow("frame",frame);
 	imshow("img",img);
