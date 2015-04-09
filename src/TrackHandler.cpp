@@ -12,7 +12,10 @@
 #include "UEyeOpenCV.hpp"
 #include <string>
 
-//#define DEBUG
+#define DEBUG
+//#define SHOW_IMAGE
+#define SHOW_DRAWING
+#define END_TURN
 
 using namespace cv;
 using namespace std;
@@ -59,31 +62,18 @@ void check_crossroad(){
 	vector< vector<double> > vertical_lines;
 	size_t index_best_distance=0;
 	detected_zebra = false;
-	// ONly makes sense if we detected 9 objects already (2 vertical lines and 7 horizontal)
-	if(no_objects>11){
+	// ONly makes sense if we detected 9 objects already (2 vertical lines and 7 horizontal) + 2 linhas
+	if(no_objects>=11){
 		for( size_t i = 0; i< objects.size(); i++ ){
-			#ifdef DEBUG
-			cout << "a1 " << i <<endl;
-			#endif
 			//if object is horizontal check if there's another
 			if( abs( objects.at(i).at(TETA) ) < HORIZONTAL_ANGLE ){
-				#ifdef DEBUG
-				cout << "a2 " <<endl;
-				#endif
 				//let's check if there's another horizontal line
 				for( size_t j = i+1; j< objects.size(); j++ ){
-					#ifdef DEBUG
-					cout << "a3 " << j <<endl;
-					#endif
+					vertical_lines.clear();
+					indexes.clear();
 					if( (abs( objects.at(j).at(TETA) ) < HORIZONTAL_ANGLE) ){
-						#ifdef DEBUG
-						cout << "a4 " <<endl;
-						#endif
 						//check if both objects are close enough to be in the zebra, but not too close
 						if( (abs(objects.at(i).at(Y) - objects.at(j).at(Y)) < ZEBRA_Y_MAX_DISTANCE) && (abs(objects.at(i).at(X) - objects.at(j).at(X)) < ZEBRA_X_MAX_DISTANCE) && (abs(objects.at(i).at(Y) - objects.at(j).at(Y)) > ZEBRA_Y_MIN_DISTANCE) ){
-							#ifdef DEBUG
-							cout << "a5" <<endl;
-							#endif
 							// who's the lower limit
 							if(objects.at(i).at(Y) < objects.at(j).at(Y)){
 								zebra_low_part = objects.at(i);
@@ -96,30 +86,16 @@ void check_crossroad(){
 							// check how many lines inside "zebra" hipothesis
 							int o_y;
 							for(size_t k=0; k<no_objects; k++){
-								#ifdef DEBUG
-								cout << "a6 " << k <<endl;
-								#endif
 								if( (k!=j) && (k!=i) ){
 									o_y = objects.at(k).at(Y);
 									if( (o_y > zebra_low_part.at(Y)) && (o_y < zebra_high_part.at(Y)) ){
-										#ifdef DEBUG
-										cout << "Detected at " << k << " with (" << objects.at(k).at(X) << ", " << objects.at(k).at(Y) << ") " << objects.at(k).at(TETA) << endl;
-										#endif
 										vertical_lines.push_back( objects.at(k) );
 										indexes.push_back(k);
 									}
 								}
 							}
-							#ifdef DEBUG
-							cout << "a7 " <<endl;
-							#endif
-							if( vertical_lines.size() == 7 ){
+							if( vertical_lines.size() >= 7 ){
 								detected_zebra = true;
-							}else if( vertical_lines.size() > 7 ){
-								detected_zebra = true;
-								#ifdef DEBUG
-								cout << "a8 " <<endl;
-								#endif
 								//calculate the supposed x mid point
 								// delete the most distant points from midpoint
 								int mid_point = ((zebra_high_part.at(X)+zebra_low_part.at(X))/2);
@@ -129,42 +105,28 @@ void check_crossroad(){
 									int worst_distance = abs(vertical_lines.at(0).at(X)-mid_point);
 									// check if any of those points has worst distance
 									for(size_t index = 1; index < vertical_lines.size(); index++){
-										#ifdef DEBUG
-										cout << "a9 " << index <<endl;
-										#endif
 										d = abs(vertical_lines.at(index).at(X)-mid_point);
 										if( d > worst_distance){
 											index_worst_distance = index;
 											worst_distance = d;
 										}
 									}
-									#ifdef DEBUG
-									cout << "a10 " << i <<endl;
-									#endif
 									// delete that shit nigga
 									vertical_lines.erase(vertical_lines.begin() + index_worst_distance);
 									indexes.erase(indexes.begin() + index_worst_distance);
 								}
 							}else{
-								break;
+								//go to next iteration if not 7 objects found
+								continue;
 							}
 							// since objects are sorted by X, 4 is the middle one
 							// compare the distance with mid points
-							#ifdef DEBUG
-							cout << "a11 " <<endl;
-							#endif
 							int mid_point = ((zebra_high_part.at(X)+zebra_low_part.at(X))/2);
 							if( abs(mid_point-vertical_lines.at(3).at(X)) < (ZEBRA_X_MAX_DISTANCE) ){
-								#ifdef DEBUG
-								cout << "a12 "<<endl;
-								#endif
 								int best_distance = abs(vertical_lines.at(0).at(X)-((zebra_high_part.at(X)+zebra_low_part.at(X))/2));
 								int d,n=0;
 								// find the middle zebra strip
 								for(size_t index = 1; index < vertical_lines.size(); index++){
-									#ifdef DEBUG
-									cout << "a13 " << index <<endl;
-									#endif
 									d = abs(vertical_lines.at(index).at(X)-mid_point);
 									if( d < best_distance){
 										index_best_distance = index;
@@ -186,9 +148,6 @@ void check_crossroad(){
 							if(detected_zebra){
 								//delete all zebra objects detected except the midline one
 								for(int i = indexes.size()-1; i >= 0; i--){
-									#ifdef DEBUG
-									cout << "a14 " << i <<endl;
-									#endif
 									size_t j=i;
 									if(j!=index_best_distance){
 										objects.erase(objects.begin() + indexes.at(j));
@@ -390,6 +349,7 @@ char calculate_end_of_turn_side(){
 void detect_end_of_turn(){
 
 	//if end of turn detected or in end of turn manouvre
+	#ifdef END_TURN
 	if( (distance_from_last_lane > DISTANCE_OF_END_TURN) || (end_of_turn) ){
 		//Just do it for the first time
 		if( !end_of_turn){
@@ -451,10 +411,13 @@ void detect_end_of_turn(){
 			
 		}
 	}else{
+	#endif
 		//apply the simple distance algorithm
 		turn_message.str("");
 		turn_message << dir << teta << "\n";
+	#ifdef END_TURN
 	}
+	#endif
 }
 // Routine that decides wich routines to call based on events
 void move_in_lane(bool lane){
@@ -482,7 +445,10 @@ void finding_objects(Mat frame){
 	size_t i;
 	float teta_rad;
 	double area;
-
+	
+	#ifdef SHOW_IMAGE
+	imshow("frame",frame);
+	#endif
 	//cvtColor(frame, frame, CV_BGR2GRAY);
 	threshold( frame, frame, BINAY_THRESHOLD,255,THRESH_BINARY);
 	//imshow("Binary", frame);
@@ -533,7 +499,9 @@ void controller(bool direction){
 	move_in_lane(direction); // applies the movement prediction algorithm
 	send_command_arduino(); // sends data to arduino
 	
+	#ifdef SHOW_DRAWING
 	imshow("Drawing", drawing);
+	#endif
 	waitKey(1);
 
 }
