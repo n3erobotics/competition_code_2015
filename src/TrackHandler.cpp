@@ -148,6 +148,7 @@ void check_crossroad(){
 							}else{
 								detected_zebra = false;
 							}
+
 							// delete objects of crossroad
 							if(detected_zebra){
 								// delete horizontal lines
