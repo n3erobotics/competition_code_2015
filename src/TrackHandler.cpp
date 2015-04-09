@@ -201,39 +201,10 @@ void find_first_object(bool position){
 	bool first_line=false;
 	int min_dist, dist;
 
-	if(position){
-		while(!first_line){
-			message.str("");
-			message << "l50" << endl;
-			serialPort.sendArray(message.str());
-			image=UEye.getFrame();
-			flip(image,image, 0);
-			finding_objects(image);
-			waitKey(1);
-			//First recognition of line2follow
-			for(size_t i=0; i<height/3; i++){
-				cout << i << endl;
-				Vec3b color = drawing.at<Vec3b>(Point(580,i));
-				//if he detects white
-				if(color.val[0]==255){
-					int N=objects.size()-1;
-					// the object in the right up corner gets caught
-					for( size_t j = 0; j<objects.size(); j++ ){
-						cout << "for: " << N-j << endl;
-						if(objects.at(N-j).at(Y)<(height/3)){
-							last_line2follow=objects.at(N-j);
-							line2follow=objects.at(N-j);
-							first_line=true;
-							break;
-						}
-					}
-				}
-			}
-		}
-	}else{
-		image=UEye.getFrame();
-		cout << "Finding Objects for the first time!" << endl;
-		finding_objects(image);
+	image=UEye.getFrame();
+	cout << "Finding Objects for the first time!" << endl;
+	finding_objects(image);
+	if(objects.size > 0){
 		//First recognition of line2follow
 		last_line2follow=objects.at(0);
 		line2follow=objects.at(0);
@@ -475,8 +446,8 @@ void finding_objects(Mat frame){
 	findContours( frame, contours, CV_RETR_EXTERNAL, CV_LINK_RUNS, Point(0, 0) );
 
 	// Clear used variables
-	drawing = Mat::zeros( frame.size(), CV_8UC3 );
-	Mat test = Mat::zeros( frame.size(), CV_8UC3 );
+	drawing = Mat::zeros( frame.size(), CV_8UC1 );
+	Mat test = Mat::zeros( frame.size(), CV_8UC1 );
 	objects.clear();
 
 	for( i = 0; i< contours.size(); i++ )
