@@ -89,8 +89,10 @@ void check_crossroad(){
 								if( (k!=j) && (k!=i) ){
 									o_y = objects.at(k).at(Y);
 									if( (o_y > zebra_low_part.at(Y)) && (o_y < zebra_high_part.at(Y)) ){
-										vertical_lines.push_back( objects.at(k) );
-										indexes.push_back(k);
+										if( (abs(o_y-zebra_low_part.at(Y)) < HORIZONTAL) &&   (abs(o_y-zebra_high_part.at(Y)) < HORIZONTAL) ){
+											vertical_lines.push_back( objects.at(k) );
+											indexes.push_back(k);
+										}
 									}
 								}
 							}
@@ -351,7 +353,7 @@ void detect_end_of_turn(){
 
 //if end of turn detected or in end of turn manouvre
 #ifdef END_TURN
-	//int initial_y = line2follow.at(Y);
+	int initial_y = line2follow.at(Y);
 	if( (distance_from_last_lane > DISTANCE_OF_END_TURN) || (end_of_turn) ){
 		//Just do it for the first time
 		if( !end_of_turn){
@@ -366,7 +368,7 @@ void detect_end_of_turn(){
 			//TURN LEFT
 			if(end_turn_dir=='l'){
 				for( size_t i = 1; i< objects.size(); i++ ){
-					if( abs(objects.at(i).at(Y)-line2follow.at(Y)) < HORIZONTAL ){
+					if( abs(objects.at(i).at(Y)-initial_y) < HORIZONTAL ){
 						if(objects.at(i).at(X)<line2follow.at(X)){
 							line2follow = objects.at(i);
 							last_line2follow = objects.at(i);
@@ -376,7 +378,7 @@ void detect_end_of_turn(){
 				turn_message << end_turn_dir << TETA_END_TURN_LEFT  << "\n";
 			}else{
 				for( size_t i = 1; i< objects.size(); i++ ){
-					if( abs(objects.at(i).at(Y)-line2follow.at(Y)) < HORIZONTAL ){
+					if( abs(objects.at(i).at(Y)-initial_y) < HORIZONTAL ){
 						if(objects.at(i).at(X)>line2follow.at(X)){
 							line2follow = objects.at(i);
 							last_line2follow = objects.at(i);
