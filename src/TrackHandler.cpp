@@ -455,13 +455,16 @@ void finding_objects(Mat frame){
 	double area;
 	Mat img;
 
-#ifdef SHOW_IMAGE
-	imshow("frame",frame);
-#endif
+;
+
 
 	//cvtColor(frame, frame, CV_BGR2GRAY);
 	GaussianBlur(frame, img, Size(0, 0), 3);
 	addWeighted(frame, 1.5, img, -0.5, 0, img);
+#ifdef SHOW_IMAGE
+	imshow("frame",frame)
+	imshow("img",img);
+#endif
 	threshold( img, frame, BINAY_THRESHOLD,255,THRESH_BINARY);
 	//imshow("Binary", frame);
 	//waitKey(1);
