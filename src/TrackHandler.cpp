@@ -165,9 +165,6 @@ void check_crossroad(){
 						}
 					}
 				}
-				if(detected_zebra){
-					break;
-				}
 			}
 			if(detected_zebra){
 				cout << "**************************************PASSADEIRA**************************************" <<endl;
