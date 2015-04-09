@@ -361,7 +361,7 @@ void detect_end_of_turn(){
 //if end of turn detected or in end of turn manouvre
 #ifdef END_TURN
 	int initial_y = line2follow.at(Y);
-	if( (detected_zebra) && ((distance_from_last_lane > DISTANCE_OF_END_TURN) || (end_of_turn)) ){
+	if( (!detected_zebra) && ((distance_from_last_lane > DISTANCE_OF_END_TURN) || (end_of_turn)) ){
 		//Just do it for the first time
 		if( !end_of_turn){
 			//if( abs(teta) < HORIZONTAL_LINE_THRESHOLD ){
