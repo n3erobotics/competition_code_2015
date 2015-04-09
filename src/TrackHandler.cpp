@@ -204,7 +204,7 @@ void find_first_object(bool position){
 	image=UEye.getFrame();
 	cout << "Finding Objects for the first time!" << endl;
 	finding_objects(image);
-	if(objects.size > 0){
+	if(objects.size() > 0){
 		//First recognition of line2follow
 		last_line2follow=objects.at(0);
 		line2follow=objects.at(0);
