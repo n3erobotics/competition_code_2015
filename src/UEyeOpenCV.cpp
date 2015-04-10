@@ -114,14 +114,14 @@ UeyeOpencvCam::UeyeOpencvCam() {
                 cout << "Couldn't set image memory" << endl;
         }
         //set auto settings
-        retInt = is_SetAutoParameter(hCam, IS_SET_ENABLE_AUTO_WHITEBALANCE, &on, &empty);
+        /*retInt = is_SetAutoParameter(hCam, IS_SET_ENABLE_AUTO_WHITEBALANCE, &on, &empty);
 		if (retInt != IS_SUCCESS) {
                 cout << "Couldn't set automatic white balance" << endl;
         }
         retInt = is_SetAutoParameter(hCam, IS_SET_ENABLE_AUTO_GAIN, &on, &empty);
         if (retInt != IS_SUCCESS) {
                 cout << "Couldn't set automatic gain" << endl;
-        }
+        }*/
         
         //PIXEL CLOCK
         UINT pixelClock = PIXELCLOCK;

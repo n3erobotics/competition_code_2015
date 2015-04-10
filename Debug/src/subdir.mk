@@ -5,6 +5,7 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
 ../src/Dualshock3.cpp \
+../src/SemaphoreTrigger.cpp \
 ../src/SerialPort.cpp \
 ../src/SignalInterpretation.cpp \
 ../src/TrackHandler.cpp \
@@ -14,6 +15,7 @@ CPP_SRCS += \
 
 OBJS += \
 ./src/Dualshock3.o \
+./src/SemaphoreTrigger.o \
 ./src/SerialPort.o \
 ./src/SignalInterpretation.o \
 ./src/TrackHandler.o \
@@ -23,6 +25,7 @@ OBJS += \
 
 CPP_DEPS += \
 ./src/Dualshock3.d \
+./src/SemaphoreTrigger.d \
 ./src/SerialPort.d \
 ./src/SignalInterpretation.d \
 ./src/TrackHandler.d \

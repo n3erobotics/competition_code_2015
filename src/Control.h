@@ -8,7 +8,7 @@
 #define DS3_SPEED 280
 
 //Camera Controllers
-#define BINAY_THRESHOLD 130
+#define BINAY_THRESHOLD 235
 
 //Track image controls
 #define DISTANCE_OF_END_TURN 105
@@ -23,11 +23,11 @@
 #define TETA_END_TURN_RIGHT 40
 #define HORIZONTAL 15
 #define X_MAX_TO_DETECT 100
-#define X_TO_STOP_TURN 175
+#define X_TO_STOP_TURN 190
 #define Y_TO_STOP_TURN 100
 
 //Other
-#define SPEED 250
+#define SPEED 280
 #define Y_MAX_TO_DETECT_LANE 155
 #define Y_MIN_TO_DETECT_LANE 0
 #define Y_RATIO 1
@@ -43,7 +43,7 @@
 #define MAX_ZEBRA_HEIGHT 250
 
 //Devices
-#define ARDUINO_CONTROL "//dev//ttyACM0"
+#define ARDUINO_CONTROL "//dev//ttyACM1"
 #define DEVICE_TOP 7
 
 ///capture width and height

@@ -10,6 +10,7 @@
 #include "SerialPort.h"
 #include "SignalInterpretation.h"
 #include "UEyeOpenCV.hpp"
+#include "SemaphoreTrigger.h"
 #include <string>
 
 #define DEBUG
@@ -188,6 +189,8 @@ void check_crossroad(){
 					laps++;
 					cout << endl << endl << "---------------------- LAP ----------------------"<< endl << endl ;
 					if(laps == 4){
+						serialPort.sendArray("p\n");
+						serialPort.sendArray("p\n");
 						serialPort.sendArray("p\n");
 					}
 				}
@@ -535,6 +538,7 @@ void *trackHandler(void*){
 		completed_lap=false;
 		if(signal==GREEN_FRONT){
 
+			waitForIt();
 			find_first_object(RIGHT);
 			present_lane=OUTSIDE;
 			speed_message.str("");
