@@ -9,7 +9,6 @@
 #include "Utils.h"
 #include "SerialPort.h"
 #include "SignalInterpretation.h"
-#include "Dualshock3.h"
 #include "UEyeOpenCV.hpp"
 #include <string>
 
@@ -202,21 +201,29 @@ void find_first_object(bool position){
 	bool first_line=false;
 	int min_dist, dist;
 
-	image=UEye.getFrame();
-	cout << "Finding Objects for the first time!" << endl;
-	finding_objects(image);
-	if(objects.size() > 0){
-		//First recognition of line2follow
-		last_line2follow=objects.at(0);
-		line2follow=objects.at(0);
-		min_dist=abs( calculateDistanceToMidline(objects.at(0).at(X), objects.at(0).at(Y), RIGHT) );
-		for( size_t i = 1; i< objects.size(); i++ ){
-			if(objects.at(i).at(AREA)<400){
-				dist=abs( calculateDistanceToMidline(objects.at(i).at(X), objects.at(i).at(Y), RIGHT) );
-				if(dist<min_dist){
-					min_dist=dist;
-					last_line2follow=objects.at(i);
-					line2follow=objects.at(i);
+	while(!first_line){
+		image=UEye.getFrame();
+		imshow("image", image);
+
+		cout << "Finding Objects for the first time!" << endl;
+		finding_objects(image);
+
+		imshow("Drawing", drawing);
+		waitKey(100);
+		if(objects.size() > 0){
+			//First recognition of line2follow
+			last_line2follow=objects.at(0);
+			line2follow=objects.at(0);
+			min_dist=abs( calculateDistanceToMidline(objects.at(0).at(X), objects.at(0).at(Y), RIGHT) );
+			for( size_t i = 1; i< objects.size(); i++ ){
+				if(objects.at(i).at(AREA)<400){
+					dist=abs( calculateDistanceToMidline(objects.at(i).at(X), objects.at(i).at(Y), RIGHT) );
+					if(dist<min_dist){
+						min_dist=dist;
+						last_line2follow=objects.at(i);
+						line2follow=objects.at(i);
+						first_line = true;
+					}
 				}
 			}
 		}
@@ -339,10 +346,11 @@ void detect_end_of_turn(){
 
 			end_turn_dir=calculate_end_of_turn_side();
 			end_of_turn = true;
+#ifndef CONTROL_WITH_DS3
 			speed_message.str("");
 			speed_message << "f" << 5 << endl;
-			//serialPort.sendArray(speed_message.str());
-
+			serialPort.sendArray(speed_message.str());
+#endif
 			//TURN LEFT
 			if(end_turn_dir=='l'){
 				for( size_t i = 1; i< objects.size(); i++ ){
@@ -376,18 +384,22 @@ void detect_end_of_turn(){
 				if( (distanceMiddle > 0) &&  (teta > (2 * HORIZONTAL)) ){
 					cout << "**************************************Ended!**************************************" << endl;
 					end_of_turn = false;
-					speed_message.str("");;
+#ifndef CONTROL_WITH_DS3
+					speed_message.str("");
 					speed_message << "f" << SPEED << endl;
 					serialPort.sendArray(speed_message.str());
+#endif
 				}
 			}
 			if(end_turn_dir == 'r'){
 				if( (distanceMiddle < 0) && (teta > (2 * HORIZONTAL))){
 					cout << "**************************************Ended!**************************************" << endl;
 					end_of_turn = false;
-					speed_message.str("");;
+#ifndef CONTROL_WITH_DS3
+					speed_message.str("");
 					speed_message << "f" << SPEED << endl;
 					serialPort.sendArray(speed_message.str());
+#endif
 				}
 			}
 
@@ -430,15 +442,15 @@ void finding_objects(Mat frame){
 	Mat img;
 
 	//cvtColor(frame, frame, CV_BGR2GRAY);
-	timer.reset();
+	/*timer.reset();
 	GaussianBlur(frame, img, Size(0, 0), 2);
 	addWeighted(frame, 1.5, img, -0.5, 0, img);
-	cout << "Time elapsed: " << timer.elapsed() << endl;
+	cout << "Time elapsed: " << timer.elapsed() << endl;*/
 #ifdef SHOW_IMAGE
 	imshow("frame",frame);
-	imshow("img",img);
+	//imshow("img",img);
 #endif
-	threshold( img, frame, BINAY_THRESHOLD,255,THRESH_BINARY);
+	threshold( frame, frame, BINAY_THRESHOLD,255,THRESH_BINARY);
 	//imshow("Binary", frame);
 	//waitKey(1);
 
@@ -498,9 +510,6 @@ void *trackHandler(void*){
 	Timer timer;
 	std::stringstream s;
 	int signal;
-	
-	Dualshock3 joystick;
-	joystick.connect();
 
 	message.str("");
 	message << "n" << endl;
@@ -515,8 +524,8 @@ void *trackHandler(void*){
 		completed_lap=false;
 		if(signal==GREEN_FRONT){
 
+			cout << "ENTRAR AQUI!" << endl;
 			find_first_object(RIGHT);
-
 			present_lane=OUTSIDE;
 			speed_message.str("");
 			speed_message << "f" << SPEED << endl;
@@ -524,25 +533,20 @@ void *trackHandler(void*){
 
 			
 			while(!completed_lap){
-				joystick.getData();
-				
-				speed_message << "f" << joystick.axis[13]/135 << endl;
-				serialPort.sendArray(speed_message.str());
-				
+
 				//timer.reset();
 				image=UEye.getFrame();
 				//imshow("IMAGE",image);
 				//cout << endl << "-------------------------" << endl << endl << "Capture frame time: " << timer.elapsed() << endl;
-
 				//timer.reset();
 				controller(RIGHT);
 				//cout << endl << "-------------------------" << endl << endl << "Controller procedure time: " << timer.elapsed() << endl;
 				//				cout << "Time elapsed: " << timer.elapsed() << endl;
-				//if(wait_ESC()){
-				//serialPort.sendArray("n");
-				//destroyAllWindows();
-				//pthread_exit(NULL);
-				//}
+				if(wait_ESC()){
+					serialPort.sendArray("n");
+					destroyAllWindows();
+					pthread_exit(NULL);
+				}
 				//TODO stop at ZEBRAAAAAAAAA
 				//check_display_update();
 			}

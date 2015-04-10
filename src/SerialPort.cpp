@@ -11,6 +11,8 @@
 
 #include "SerialPort.h"
 
+extern pthread_mutex_t access_HUB;
+
 int SerialPort::connect(const char device[]) {
 	struct termios terminalAttributes;
 
@@ -97,11 +99,13 @@ void SerialPort::disconnect(void)
 
 void SerialPort::sendArray(string buffer) {
 
-	//pthread_mutex_lock(&access_HUB);
+	//cout << "Locking";
 
-	//cout << "Sending.. " << buffer.c_str();
+	pthread_mutex_lock(&access_HUB);
 	int n=write(fileDescriptor, buffer.c_str(), buffer.length());
-	//pthread_mutex_unlock(&access_HUB);
+	pthread_mutex_unlock(&access_HUB);
+
+	//cout << "Sending.. " << buffer.c_str() << endl;
 
 	usleep(5000);
 	if(n<=0)

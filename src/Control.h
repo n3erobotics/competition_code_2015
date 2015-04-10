@@ -4,6 +4,7 @@
 #include "UEyeOpenCV.hpp"
 
 //Lane change
+#define CONTROL_WITH_DS3
 
 //Camera Controllers
 #define BINAY_THRESHOLD 130

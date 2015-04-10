@@ -2,6 +2,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <sstream>
 
 #include "TrackHandler.h"
 #include "Control.h"
@@ -9,6 +10,7 @@
 #include "Utils.h"
 #include "SerialPort.h"
 #include "UEyeOpenCV.hpp"
+#include "Dualshock3.h"
 
 #define NUM_THREADS 2
 
@@ -30,6 +32,25 @@ IplImage *fram=cvCreateImage(cvSize(w,h),8,3);   //Original Image
 IplImage *hsvframe=cvCreateImage(cvSize(w,h),8,3);//Image in HSV color space
 IplImage *threshy=cvCreateImage(cvSize(w,h),8,1); //Threshold image of yellow color
 IplImage* img=cvCreateImage(cvSize(w,h),8,3);
+
+void *DS3Controller(void *){
+	stringstream speed_message;
+
+	Dualshock3 joystick;
+	joystick.connect();
+	while(1){
+		joystick.getData();
+		if(joystick.axis[13] != 0){
+			speed_message.str("");
+			speed_message << "f" << -10 << endl;
+			//speed_message << "f" << joystick.axis[13]/135 << endl;
+			serialPort.sendArray(speed_message.str());
+		}else{
+			serialPort.sendArray("n\n");
+		}
+	}
+	pthread_exit(NULL);
+}
 
 int main()
 {
@@ -55,6 +76,14 @@ int main()
 		//cout << "ERROR; return code from pthread_create() is "<< rc << endl;
 		//exit(-1);
 	//}
+#ifdef CONTROL_WITH_DS3
+	cout << "Creating Controller thread" << endl;
+	rc = pthread_create(&threads[0], NULL, DS3Controller, (void *)NULL);
+	if (rc){
+		cout << "ERROR; return code from pthread_create() is "<< rc << endl;
+		exit(-1);
+	}
+#endif
 
 	cout << "Creating Track Handler thread" << endl;
 	rc = pthread_create(&threads[0], NULL, trackHandler, (void *)NULL);
