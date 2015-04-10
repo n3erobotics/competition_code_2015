@@ -13,7 +13,7 @@
 #include <string>
 
 #define DEBUG
-//#define SHOW_IMAGE
+#define SHOW_IMAGE
 #define SHOW_DRAWING
 #define END_TURN
 //#define SHOW_TIME
@@ -29,6 +29,8 @@ bool completed_lap = false;
 //Glabal Variables
 int stoped_detect_zebra, laps;
 bool detected_zebra=false;
+
+bool spike;
 
 //Tracking variables
 int distance_from_last_lane=0;
@@ -179,6 +181,14 @@ void check_crossroad(){
 						drawLane(vertical_lines.at(index), drawing, CIAN);
 						//cout << "Vertical at (" << vertical_lines.at(index).at(X) << ", " << vertical_lines.at(index).at(Y) << ")" << endl;
 						//cout << "Vertical line angle of: " << vertical_lines.at(index).at(TETA) << endl;
+					}
+				}
+				if(spike){
+					spike = false;
+					laps++;
+					cout << endl << endl << "---------------------- LAP ----------------------"<< endl << endl ;
+					if(laps == 4){
+						serialPort.sendArray("p\n");
 					}
 				}
 				break;
@@ -344,10 +354,11 @@ void detect_end_of_turn(){
 
 			end_turn_dir=calculate_end_of_turn_side();
 			end_of_turn = true;
+			spike = true;
 #ifndef CONTROL_WITH_DS3
 			speed_message.str("");
 			speed_message << "f" << 5 << endl;
-			serialPort.sendArray(speed_message.str());
+			//serialPort.sendArray(speed_message.str());
 #endif
 			//TURN LEFT
 			if(end_turn_dir=='l'){
@@ -510,6 +521,7 @@ void *trackHandler(void*){
 	std::stringstream s;
 	int signal;
 
+	spike = false;
 	message.str("");
 	message << "n" << endl;
 	serialPort.sendArray(message.str());
@@ -527,7 +539,7 @@ void *trackHandler(void*){
 			present_lane=OUTSIDE;
 			speed_message.str("");
 			speed_message << "f" << SPEED << endl;
-			//serialPort.sendArray(speed_message.str());
+			serialPort.sendArray(speed_message.str());
 
 			
 			while(!completed_lap){
@@ -541,6 +553,7 @@ void *trackHandler(void*){
 				controller(RIGHT);
 				//cout << endl << "-------------------------" << endl << endl << "Controller procedure time: " << timer.elapsed() << endl;
 				//				cout << "Time elapsed: " << timer.elapsed() << endl;
+				cout << laps << endl;
 				if(wait_ESC()){
 					serialPort.sendArray("n");
 					destroyAllWindows();

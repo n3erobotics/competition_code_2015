@@ -4,7 +4,7 @@
 #include "UEyeOpenCV.hpp"
 
 //Lane change
-#define CONTROL_WITH_DS3
+//#define CONTROL_WITH_DS3
 #define DS3_SPEED 280
 
 //Camera Controllers
@@ -19,15 +19,15 @@
 #define VERTICAL_LINE_THRESHOLD 30
 
 //Spike
-#define TETA_END_TURN_LEFT 23
-#define TETA_END_TURN_RIGHT 45
+#define TETA_END_TURN_LEFT 27
+#define TETA_END_TURN_RIGHT 40
 #define HORIZONTAL 15
 #define X_MAX_TO_DETECT 100
-#define X_TO_STOP_TURN 200
-#define Y_TO_STOP_TURN 115
+#define X_TO_STOP_TURN 175
+#define Y_TO_STOP_TURN 100
 
 //Other
-#define SPEED 10
+#define SPEED 250
 #define Y_MAX_TO_DETECT_LANE 155
 #define Y_MIN_TO_DETECT_LANE 0
 #define Y_RATIO 1
