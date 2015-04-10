@@ -5,20 +5,26 @@
 
 //Lane change
 #define CONTROL_WITH_DS3
+#define DS3_SPEED 280
 
 //Camera Controllers
 #define BINAY_THRESHOLD 130
 
 //Track image controls
 #define DISTANCE_OF_END_TURN 105
-#define MID_LINE_DISTANCE 110
-#define TURN_COEFICIENT 2.75
+#define MID_LINE_DISTANCE 225
+#define TURN_COEFICIENT 2.25
 #define N_TO_KEEP 3
-#define TETA_END_TURN_LEFT 14
-#define TETA_END_TURN_RIGHT 35
-#define HORIZONTAL 15
 #define HORIZONTAL_LINE_THRESHOLD 25
 #define VERTICAL_LINE_THRESHOLD 30
+
+//Spike
+#define TETA_END_TURN_LEFT 23
+#define TETA_END_TURN_RIGHT 45
+#define HORIZONTAL 15
+#define X_MAX_TO_DETECT 100
+#define X_TO_STOP_TURN 200
+#define Y_TO_STOP_TURN 115
 
 //Other
 #define SPEED 10

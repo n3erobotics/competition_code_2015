@@ -42,8 +42,8 @@
 #define AOIY 260
 #define AOIWIDTH 752
 #define AOIHEIGHT 180
-#define PIXELCLOCK 20
-#define FRAMERATE 30
+#define PIXELCLOCK 25
+#define FRAMERATE 55
 #define EXPOSURE 30
 #define GAMMA 100 // equals 1.00
 

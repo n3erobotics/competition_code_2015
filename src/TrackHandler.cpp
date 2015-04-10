@@ -13,9 +13,10 @@
 #include <string>
 
 #define DEBUG
-#define SHOW_IMAGE
+//#define SHOW_IMAGE
 #define SHOW_DRAWING
 #define END_TURN
+//#define SHOW_TIME
 
 using namespace cv;
 using namespace std;
@@ -99,12 +100,12 @@ void check_crossroad(){
 								}
 							}
 							//if 7 vertical lines are detecteted
-							if( vertical_lines.size() >= 7 ){
+							if( vertical_lines.size() >= 9 ){
 								detected_zebra = true;
 								//calculate the supposed x mid point
 								// delete the most distant points from midpoint
 								int mid_point = ((zebra_high_part.at(X)+zebra_low_part.at(X))/2);
-								while( vertical_lines.size() > 7 ){
+								while( vertical_lines.size() > 9 ){
 									// assume first is the worst distance
 									int index_worst_distance = 0, d;
 									int worst_distance = abs(vertical_lines.at(0).at(X)-mid_point);
@@ -127,7 +128,7 @@ void check_crossroad(){
 							// since objects are sorted by X, 4 is the middle one
 							// compare the distance with mid points
 							int mid_point = ((zebra_high_part.at(X)+zebra_low_part.at(X))/2);
-							if( abs(mid_point-vertical_lines.at(3).at(X)) < (ZEBRA_X_MAX_DISTANCE) ){
+							if( abs(mid_point-vertical_lines.at(4).at(X)) < (ZEBRA_X_MAX_DISTANCE) ){
 								int best_distance = abs(vertical_lines.at(0).at(X)-((zebra_high_part.at(X)+zebra_low_part.at(X))/2));
 								int d,n=0;
 								// find the middle zebra strip
@@ -203,13 +204,10 @@ void find_first_object(bool position){
 
 	while(!first_line){
 		image=UEye.getFrame();
-		imshow("image", image);
 
 		cout << "Finding Objects for the first time!" << endl;
 		finding_objects(image);
 
-		imshow("Drawing", drawing);
-		waitKey(100);
 		if(objects.size() > 0){
 			//First recognition of line2follow
 			last_line2follow=objects.at(0);
@@ -355,7 +353,7 @@ void detect_end_of_turn(){
 			if(end_turn_dir=='l'){
 				for( size_t i = 1; i< objects.size(); i++ ){
 					if( abs(objects.at(i).at(Y)-initial_y) < HORIZONTAL ){
-						if(objects.at(i).at(X)<line2follow.at(X)){
+						if( (objects.at(i).at(X)<line2follow.at(X)) && (objects.at(i).at(X)>X_MAX_TO_DETECT)){
 							line2follow = objects.at(i);
 							last_line2follow = objects.at(i);
 						}
@@ -365,7 +363,7 @@ void detect_end_of_turn(){
 			}else{
 				for( size_t i = 1; i< objects.size(); i++ ){
 					if( abs(objects.at(i).at(Y)-initial_y) < HORIZONTAL ){
-						if(objects.at(i).at(X)>line2follow.at(X)){
+						if( (objects.at(i).at(X)>line2follow.at(X)) && (objects.at(i).at(X)<(AOIWIDTH-X_MAX_TO_DETECT)) ){
 							line2follow = objects.at(i);
 							last_line2follow = objects.at(i);
 						}
@@ -381,7 +379,8 @@ void detect_end_of_turn(){
 			//
 		}else{
 			if(end_turn_dir == 'l'){
-				if( (distanceMiddle > 0) &&  (teta > (2 * HORIZONTAL)) ){
+				//if( (distanceMiddle > 0) &&  (teta > (HORIZONTAL)) ){
+				if( (line2follow.at(X)>X_TO_STOP_TURN ) && (line2follow.at(Y)>Y_TO_STOP_TURN ) ){
 					cout << "**************************************Ended!**************************************" << endl;
 					end_of_turn = false;
 #ifndef CONTROL_WITH_DS3
@@ -389,10 +388,13 @@ void detect_end_of_turn(){
 					speed_message << "f" << SPEED << endl;
 					serialPort.sendArray(speed_message.str());
 #endif
+				}else{
+					cout << "TURNING: " << turn_message.str() << endl;
 				}
 			}
 			if(end_turn_dir == 'r'){
-				if( (distanceMiddle < 0) && (teta > (2 * HORIZONTAL))){
+				//if( (distanceMiddle < 0) && (teta > (2 * HORIZONTAL))){
+				if( (line2follow.at(X)<(AOIWIDTH-X_TO_STOP_TURN) ) && (line2follow.at(Y)>Y_TO_STOP_TURN ) ){
 					cout << "**************************************Ended!**************************************" << endl;
 					end_of_turn = false;
 #ifndef CONTROL_WITH_DS3
@@ -400,6 +402,8 @@ void detect_end_of_turn(){
 					speed_message << "f" << SPEED << endl;
 					serialPort.sendArray(speed_message.str());
 #endif
+				}else{
+					cout << "TURNING: " << turn_message.str() << endl;
 				}
 			}
 
@@ -442,13 +446,8 @@ void finding_objects(Mat frame){
 	Mat img;
 
 	//cvtColor(frame, frame, CV_BGR2GRAY);
-	/*timer.reset();
-	GaussianBlur(frame, img, Size(0, 0), 2);
-	addWeighted(frame, 1.5, img, -0.5, 0, img);
-	cout << "Time elapsed: " << timer.elapsed() << endl;*/
 #ifdef SHOW_IMAGE
 	imshow("frame",frame);
-	//imshow("img",img);
 #endif
 	threshold( frame, frame, BINAY_THRESHOLD,255,THRESH_BINARY);
 	//imshow("Binary", frame);
@@ -459,8 +458,8 @@ void finding_objects(Mat frame){
 	findContours( frame, contours, CV_RETR_EXTERNAL, CV_LINK_RUNS, Point(0, 0) );
 
 	// Clear used variables
-	drawing = Mat::zeros( frame.size(), CV_8UC1 );
-	Mat test = Mat::zeros( frame.size(), CV_8UC1 );
+	drawing = Mat::zeros( frame.size(), CV_8UC3 );
+
 	objects.clear();
 
 	for( i = 0; i< contours.size(); i++ )
@@ -524,7 +523,6 @@ void *trackHandler(void*){
 		completed_lap=false;
 		if(signal==GREEN_FRONT){
 
-			cout << "ENTRAR AQUI!" << endl;
 			find_first_object(RIGHT);
 			present_lane=OUTSIDE;
 			speed_message.str("");
@@ -533,8 +531,9 @@ void *trackHandler(void*){
 
 			
 			while(!completed_lap){
-
-				//timer.reset();
+#ifdef SHOW_TIME
+				timer.reset();
+#endif
 				image=UEye.getFrame();
 				//imshow("IMAGE",image);
 				//cout << endl << "-------------------------" << endl << endl << "Capture frame time: " << timer.elapsed() << endl;
@@ -547,6 +546,9 @@ void *trackHandler(void*){
 					destroyAllWindows();
 					pthread_exit(NULL);
 				}
+#ifdef SHOW_TIME
+				cout << endl << "-------------------------" << endl << endl << "Time: " << timer.elapsed() << endl;
+#endif
 				//TODO stop at ZEBRAAAAAAAAA
 				//check_display_update();
 			}
@@ -575,9 +577,9 @@ void *trackHandler(void*){
 				}
 				//TODO stop at ZEBRAAAAAAAAA
 				//check_display_update();
-				if(present_lane==OUTSIDE){
-					wanna_change=true;
-				}
+				//if(present_lane==OUTSIDE){
+				//	wanna_change=true;
+				//}
 			}
 		}else{
 			cout << "PARKING MANEUVRE" <<endl;

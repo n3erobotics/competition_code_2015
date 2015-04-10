@@ -42,7 +42,7 @@ void *DS3Controller(void *){
 		joystick.getData();
 		if(joystick.axis[13] != 0){
 			speed_message.str("");
-			speed_message << "f" << -10 << endl;
+			speed_message << "f" << DS3_SPEED << endl;
 			//speed_message << "f" << joystick.axis[13]/135 << endl;
 			serialPort.sendArray(speed_message.str());
 		}else{
