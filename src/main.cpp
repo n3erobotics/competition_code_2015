@@ -27,12 +27,6 @@ extern UeyeOpencvCam UEye;
 extern pthread_mutex_t access_change;
 extern bool wanna_change;
 
-CvCapture* capture=cvCreateCameraCapture(0);
-IplImage *fram=cvCreateImage(cvSize(w,h),8,3);   //Original Image
-IplImage *hsvframe=cvCreateImage(cvSize(w,h),8,3);//Image in HSV color space
-IplImage *threshy=cvCreateImage(cvSize(w,h),8,1); //Threshold image of yellow color
-IplImage* img=cvCreateImage(cvSize(w,h),8,3);
-
 void *DS3Controller(void *){
 	stringstream speed_message;
 

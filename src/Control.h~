@@ -3,16 +3,12 @@
 
 #include "UEyeOpenCV.hpp"
 
-#define N_PARK 65
-#define N_FRONT 330
-#define SPEED 10
-
 //Lane change
-//#define CONTROL_WITH_DS3
-#define DS3_SPEED 70
+#define CONTROL_WITH_DS3
+#define DS3_SPEED 10
 
 //Camera Controllers
-#define BINAY_THRESHOLD 155
+#define BINAY_THRESHOLD 125
 
 //Track image controls
 #define DISTANCE_OF_END_TURN 100
@@ -31,7 +27,7 @@
 #define Y_TO_STOP_TURN 60
 
 //Other
-
+#define SPEED 280
 #define Y_MAX_TO_DETECT_LANE 145
 #define Y_MIN_TO_DETECT_LANE 0
 #define Y_RATIO 1

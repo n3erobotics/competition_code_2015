@@ -17,8 +17,8 @@
 //#define DONT_DELETE_ZEBRA
 //#define SHOW_IMAGE
 #define SHOW_DRAWING
-#define END_TURN
-//#define SHOW_TIME
+//#define END_TURN
+#define SHOW_TIME
 #define DEBUG_TURN
 
 using namespace cv;
@@ -217,8 +217,8 @@ void find_first_object(bool position){
 			line2follow=objects.at(0);
 			min_dist=abs( calculateDistanceToMidline(objects.at(0).at(X), objects.at(0).at(Y), position) );
 			for( size_t i = 1; i< objects.size(); i++ ){
-				if(objects.at(i).at(AREA)<400){
-				//if(objects.at(i).at(Y)<100){
+				//if(objects.at(i).at(AREA)<400){
+				if(objects.at(i).at(Y)<100){
 					dist=abs( calculateDistanceToMidline(objects.at(i).at(X), objects.at(i).at(Y), position) );
 					if(dist<min_dist){
 						min_dist=dist;
@@ -508,7 +508,7 @@ void finding_objects(Mat frame){
 void controller(bool direction){
 
 	finding_objects(image); //finds all relevant objects
-	check_crossroad(); // finds crossroad
+	//check_crossroad(); // finds crossroad
 	move_in_lane(direction); // applies the movement prediction algorithm
 	send_command_arduino(); // sends data to arduino
 
@@ -539,73 +539,45 @@ void *trackHandler(void*){
 		if(signal==GREEN_FRONT){
 
 			//waitForIt();
-			present_lane=RIGHT;
-			find_first_object(present_lane);
+			present_lane=LEFT;
+			find_first_object(LEFT);
 
 #ifndef CONTROL_WITH_DS3
 			speed_message.str("");
 			speed_message << "f" << SPEED << endl;
 			serialPort.sendArray(speed_message.str());
 #endif
-			
+			size_t n=0;
 			while(!completed_lap){
 #ifdef SHOW_TIME
 				timer.reset();
 #endif
-				image=UEye.getFrame();
-				//imshow("IMAGE",image);
-				//cout << endl << "-------------------------" << endl << endl << "Capture frame time: " << timer.elapsed() << endl;
-				//timer.reset();
-				controller(present_lane);
-				//cout << endl << "-------------------------" << endl << endl << "Controller procedure time: " << timer.elapsed() << endl;
-				//				cout << "Time elapsed: " << timer.elapsed() << endl;
-				cout << laps << endl;
-				/*if(wait_ESC()){
-					serialPort.sendArray("n");
+				n++;
+
+				if(n == N_FRONT){
+					present_lane = RIGHT;
+					cout << "VOU MUDAR"<<endl;
+
+				}
+				if(n>(N_FRONT)){
+					while( (distanceMiddle) < -40 ){
+						image=UEye.getFrame();
+						controller(RIGHT);
+					}
+					serialPort.sendArray("p\n");
+					cout << "VOU ACABAR"<<endl;
 					destroyAllWindows();
-					pthread_exit(NULL);
-				}*/
+					pthread_exit(0);
+				}else{
+					image=UEye.getFrame();
+					controller(present_lane);
+					cout << laps << endl;
+				}
 #ifdef SHOW_TIME
 				cout << endl << "-------------------------" << endl << endl << "Time: " << timer.elapsed() << endl;
 #endif
-				//TODO stop at ZEBRAAAAAAAAA
-				//check_display_update();
 			}
-		}else if(signal==YELLOW_LEFT){
-
-			find_first_object(LEFT);
-			message.str("");
-			message << "f" << SPEED << endl;
-			serialPort.sendArray(message.str());
-
-			present_lane=RIGHT;
-			while(!completed_lap){
-
-				//				timer.reset();
-				image=UEye.getFrame();
-				flip(image,image, 0);
-				//				cout << endl << "-------------------------" << endl << endl << "Capture frame time: " << timer.elapsed() << endl;
-
-				controller(LEFT);
-
-				//				cout << "Time elapsed: " << timer.elapsed() << endl;
-				if(wait_ESC()){
-					serialPort.sendArray("n");
-					destroyAllWindows();
-					pthread_exit(NULL);
-				}
-				//TODO stop at ZEBRAAAAAAAAA
-				//check_display_update();
-				//if(present_lane==OUTSIDE){
-				//	wanna_change=true;
-				//}
-			}
-		}else{
-			cout << "PARKING MANEUVRE" <<endl;
-			//TODO
 		}
-		//TODO go to zebra
-		//cout<< "ZEBRAAAAAAAAAAAAAAAAAAAAAA"<<endl;
 	}
 
 	destroyAllWindows();

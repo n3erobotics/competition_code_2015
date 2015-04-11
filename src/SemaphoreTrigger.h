@@ -1,4 +1,4 @@
-#define MODE RACE // RACE or PARKING
+#define MODE PARKING // RACE or PARKING
 
 #define RACE 0
 #define PARKING 1

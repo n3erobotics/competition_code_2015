@@ -64,7 +64,7 @@ void waitForIt(){
 	
 	cvNamedWindow("capture", CV_WINDOW_AUTOSIZE);
 
-	CvCapture *capture = cvCaptureFromCAM(0);
+	CvCapture *capture = cvCaptureFromCAM(1);
   
   	// let's set the camera capture size
 	cvSetCaptureProperty( capture, CV_CAP_PROP_FRAME_WIDTH, 480 );
@@ -218,7 +218,7 @@ void waitForIt(){
 	}
 	
 	*/
-    waitKey(10);
+    char k = cvWaitKey(10)&0xff;
 
 	cout << endl;
 
@@ -230,5 +230,6 @@ void waitForIt(){
   cvReleaseStructuringElement(&morphKernel);
   cvReleaseImage(&frame);
 
+  cvDestroyWindow("red_object_tracking");
 
 }
