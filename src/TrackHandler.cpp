@@ -14,10 +14,12 @@
 #include <string>
 
 #define DEBUG
-#define SHOW_IMAGE
+//#define DONT_DELETE_ZEBRA
+//#define SHOW_IMAGE
 #define SHOW_DRAWING
 #define END_TURN
 //#define SHOW_TIME
+#define DEBUG_TURN
 
 using namespace cv;
 using namespace std;
@@ -87,8 +89,7 @@ void check_crossroad(){
 							}else{
 								zebra_low_part = objects.at(j);
 								zebra_high_part = objects.at(i);
-							} 
-							vertical_lines.clear();
+							}
 							// check how many lines inside "zebra" hipothesis
 							int o_y;
 							for(size_t k=0; k<no_objects; k++){
@@ -157,8 +158,7 @@ void check_crossroad(){
 							// delete objects of crossroad
 							if(detected_zebra){
 								// delete horizontal lines
-								objects.erase(objects.begin() + i);
-								objects.erase(objects.begin() + j);
+#ifndef DONT_DELETE_ZEBRA
 								//delete all vertical lines
 								for(int k = indexes.size()-1; k >= 0; k--){
 									size_t l=k;
@@ -166,6 +166,9 @@ void check_crossroad(){
 										objects.erase(objects.begin() + indexes.at(l));
 									}
 								}
+								objects.erase(objects.begin() + j);
+								objects.erase(objects.begin() + i);
+#endif
 								break;
 							}
 						}
@@ -190,25 +193,12 @@ void check_crossroad(){
 					cout << endl << endl << "---------------------- LAP ----------------------"<< endl << endl ;
 					if(laps == 4){
 						serialPort.sendArray("p\n");
-						serialPort.sendArray("p\n");
-						serialPort.sendArray("p\n");
 					}
 				}
 				break;
 			}
 		}
 	}
-}
-void check_display_update(){
-	pthread_mutex_lock(&access_displays);
-
-	if(display_detected!=5){
-		serialPort.sendArray("r15\n");
-		usleep(1000000);
-		completed_lap=true;
-	}
-
-	pthread_mutex_unlock(&access_displays);
 }
 //TODO
 void find_first_object(bool position){
@@ -225,10 +215,11 @@ void find_first_object(bool position){
 			//First recognition of line2follow
 			last_line2follow=objects.at(0);
 			line2follow=objects.at(0);
-			min_dist=abs( calculateDistanceToMidline(objects.at(0).at(X), objects.at(0).at(Y), RIGHT) );
+			min_dist=abs( calculateDistanceToMidline(objects.at(0).at(X), objects.at(0).at(Y), position) );
 			for( size_t i = 1; i< objects.size(); i++ ){
 				if(objects.at(i).at(AREA)<400){
-					dist=abs( calculateDistanceToMidline(objects.at(i).at(X), objects.at(i).at(Y), RIGHT) );
+				//if(objects.at(i).at(Y)<100){
+					dist=abs( calculateDistanceToMidline(objects.at(i).at(X), objects.at(i).at(Y), position) );
 					if(dist<min_dist){
 						min_dist=dist;
 						last_line2follow=objects.at(i);
@@ -240,34 +231,11 @@ void find_first_object(bool position){
 		}
 	}
 }
-//TODO
-int wait_signal(){
-	int aux;
-
-
-	while(true){
-		pthread_mutex_lock(&access_displays);
-
-		aux = display_detected;
-		display_detected=5;
-
-		pthread_mutex_unlock(&access_displays);
-
-		if(aux==GREEN_FRONT){
-			return GREEN_FRONT;
-
-		}else if(aux==YELLOW_LEFT){
-			return YELLOW_LEFT;
-
-		}else if(aux==YELLOW_RIGHT){
-			return YELLOW_RIGHT;
-		}
-	}
-}
 // Routine to change to "change_lane"
 void change_lane(bool direction){
 
-	present_lane = LEFT;
+	present_lane = direction;
+
 }
 //TODO
 // Routine that calculates servo rotation from distance of the line
@@ -275,14 +243,26 @@ void simple_distance_lines(vector<double> lanes, bool lane){
 	// calculate distance to the midline depending on the lane you are in
 	// according to that, calculate the angle of turn, and store it
 	distanceMiddle = calculateDistanceToMidline(lanes.at(X), lanes.at(Y), lane);
-	if(distanceMiddle > 0){
-		dir='l';
-		teta=(int) ( (float)(distanceMiddle)/TURN_COEFICIENT);
-		lastNturns.push_back(LEFT);
+	if(lane == RIGHT ){
+		if(distanceMiddle > 0){
+			dir='l';
+			teta=(int) ( (float)(distanceMiddle)/TURN_COEFICIENT);
+			lastNturns.push_back(LEFT);
+		}else{
+			dir='r';
+			teta= (int) ( (float)(-distanceMiddle)/TURN_COEFICIENT);
+			lastNturns.push_back(RIGHT);
+		}
 	}else{
-		dir='r';
-		teta= (int) ( (float)(-distanceMiddle)/TURN_COEFICIENT);
-		lastNturns.push_back(RIGHT);
+		if(distanceMiddle < 0){
+			dir='l';
+			teta=(int) ( (float)(-distanceMiddle)/TURN_COEFICIENT);
+			lastNturns.push_back(LEFT);
+		}else{
+			dir='r';
+			teta= (int) ( (float)(distanceMiddle)/TURN_COEFICIENT);
+			lastNturns.push_back(RIGHT);
+		}
 	}
 	//buffer only keeps 5, must delete the first
 	lastNturns.erase(lastNturns.begin());
@@ -335,12 +315,13 @@ void send_command_arduino(){
 }
 char calculate_end_of_turn_side(){
 	size_t n_rights=0;
-	for(size_t i = 0; i<lastNturns.size(); i++){
+	/*for(size_t i = 0; i<lastNturns.size(); i++){
 		if(lastNturns.at(i)==RIGHT){
 			n_rights++;
 		}
 	}
-	if(n_rights > (lastNturns.size()/2) )
+	if(n_rights > (lastNturns.size()/2) )*/
+	if( (laps%2) == 0 )
 		return 'r';
 	else
 		return 'l';
@@ -350,9 +331,11 @@ void detect_end_of_turn(){
 //if end of turn detected or in end of turn manouvre
 #ifdef END_TURN
 	int initial_y = line2follow.at(Y);
+
 	if( (!detected_zebra) && ((distance_from_last_lane > DISTANCE_OF_END_TURN) || (end_of_turn)) ){
 		//Just do it for the first time
 		if( !end_of_turn){
+			cout << "INIT X: " << line2follow.at(X) << "INIT Y: " << line2follow.at(Y) << endl;
 			//if( abs(teta) < HORIZONTAL_LINE_THRESHOLD ){
 
 			end_turn_dir=calculate_end_of_turn_side();
@@ -395,6 +378,7 @@ void detect_end_of_turn(){
 			if(end_turn_dir == 'l'){
 				//if( (distanceMiddle > 0) &&  (teta > (HORIZONTAL)) ){
 				if( (line2follow.at(X)>X_TO_STOP_TURN ) && (line2follow.at(Y)>Y_TO_STOP_TURN ) ){
+					serialPort.sendArray("f100\n");
 					cout << "**************************************Ended!**************************************" << endl;
 					end_of_turn = false;
 #ifndef CONTROL_WITH_DS3
@@ -403,7 +387,15 @@ void detect_end_of_turn(){
 					serialPort.sendArray(speed_message.str());
 #endif
 				}else{
+#ifdef DEBUG_TURN
 					cout << "TURNING: " << turn_message.str() << endl;
+					for(size_t  i = 0; i< objects.size(); i++ ){
+						cout << "#" << i << " ( " << objects.at(i).at(X) << " , " << objects.at(i).at(Y) << " ) teta:" <<
+								objects.at(i).at(TETA) << "; area: " << objects.at(i).at(AREA) << endl;
+					}
+					cout << "Line to follow "<< " ( " << line2follow.at(X) << " , " << line2follow.at(Y) << " ) teta:" <<
+							line2follow.at(TETA) << "; area: " << line2follow.at(AREA) << endl;
+#endif
 				}
 			}
 			if(end_turn_dir == 'r'){
@@ -417,7 +409,15 @@ void detect_end_of_turn(){
 					serialPort.sendArray(speed_message.str());
 #endif
 				}else{
+#ifdef DEBUG_TURN
 					cout << "TURNING: " << turn_message.str() << endl;
+					for(size_t  i = 0; i< objects.size(); i++ ){
+						cout << "#" << i << " ( " << objects.at(i).at(X) << " , " << objects.at(i).at(Y) << " ) teta:" <<
+								objects.at(i).at(TETA) << "; area: " << objects.at(i).at(AREA) << endl;
+					}
+					cout << "Line to follow "<< " ( " << line2follow.at(X) << " , " << line2follow.at(Y) << " ) teta:" <<
+												line2follow.at(TETA) << "; area: " << line2follow.at(AREA) << endl;
+#endif
 				}
 			}
 
@@ -538,13 +538,15 @@ void *trackHandler(void*){
 		completed_lap=false;
 		if(signal==GREEN_FRONT){
 
-			waitForIt();
-			find_first_object(RIGHT);
-			present_lane=OUTSIDE;
+			//waitForIt();
+			present_lane=RIGHT;
+			find_first_object(present_lane);
+
+#ifndef CONTROL_WITH_DS3
 			speed_message.str("");
 			speed_message << "f" << SPEED << endl;
 			serialPort.sendArray(speed_message.str());
-
+#endif
 			
 			while(!completed_lap){
 #ifdef SHOW_TIME
@@ -554,15 +556,15 @@ void *trackHandler(void*){
 				//imshow("IMAGE",image);
 				//cout << endl << "-------------------------" << endl << endl << "Capture frame time: " << timer.elapsed() << endl;
 				//timer.reset();
-				controller(RIGHT);
+				controller(present_lane);
 				//cout << endl << "-------------------------" << endl << endl << "Controller procedure time: " << timer.elapsed() << endl;
 				//				cout << "Time elapsed: " << timer.elapsed() << endl;
 				cout << laps << endl;
-				if(wait_ESC()){
+				/*if(wait_ESC()){
 					serialPort.sendArray("n");
 					destroyAllWindows();
 					pthread_exit(NULL);
-				}
+				}*/
 #ifdef SHOW_TIME
 				cout << endl << "-------------------------" << endl << endl << "Time: " << timer.elapsed() << endl;
 #endif
@@ -576,7 +578,7 @@ void *trackHandler(void*){
 			message << "f" << SPEED << endl;
 			serialPort.sendArray(message.str());
 
-			present_lane=OUTSIDE;
+			present_lane=RIGHT;
 			while(!completed_lap){
 
 				//				timer.reset();

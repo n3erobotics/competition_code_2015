@@ -20,10 +20,6 @@
 #define RIGHT 0
 #define LEFT 1
 
-//Positioning
-#define INSIDE 0
-#define OUTSIDE 1
-
 //Vector predefined positions
 #define X 0
 #define Y 1
